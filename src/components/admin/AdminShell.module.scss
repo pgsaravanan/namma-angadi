@@ -1,0 +1,192 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 16px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+
+  @media (max-width: 820px) {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+.shopName {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.storeLink {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  @media (max-width: 820px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.navLink {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--color-text-muted);
+
+  &:hover {
+    background: var(--color-surface-muted);
+    color: var(--color-text);
+  }
+}
+
+.active {
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.user {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.userName {
+  font-weight: 600;
+}
+
+.content {
+  padding: 32px;
+  max-width: 1080px;
+
+  @media (max-width: 820px) {
+    padding: 24px 16px;
+  }
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-size: 24px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.statValue {
+  font-size: 26px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.inlineForm {
+  display: inline;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.domainInput {
+  width: 200px;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.platformContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.photoPreview {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.categoryForm {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}

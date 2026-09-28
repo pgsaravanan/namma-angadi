@@ -1,0 +1,114 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 32px 16px;
+  background: var(--color-surface-muted);
+}
+
+.phone {
+  width: 100%;
+  max-width: 380px;
+  min-height: 680px;
+  border: 10px solid #1f1a17;
+  border-radius: 36px;
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.appBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  background: #3b2a6b;
+  color: #fff;
+}
+
+.appName {
+  font-weight: 700;
+}
+
+.openedFrom {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px;
+}
+
+.requestLabel {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.center {
+  margin: 0;
+  text-align: center;
+}
+
+.bigAmount {
+  margin: 0;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.bigTick {
+  align-self: center;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.pin {
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-size: 20px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 13px;
+
+  dt {
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+    word-break: break-all;
+  }
+}
+
+.log {
+  pre {
+    margin: 6px 0 0;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-muted);
+    font-size: 11px;
+    white-space: pre-wrap;
+  }
+}

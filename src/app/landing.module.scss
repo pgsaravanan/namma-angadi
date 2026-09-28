@@ -1,0 +1,28 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 18vh 16px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.title {
+  font-size: clamp(32px, 6vw, 48px);
+}
+
+.lead {
+  margin: 0 0 8px;
+  font-size: 17px;
+  color: var(--color-text-muted);
+}
