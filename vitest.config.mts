@@ -10,6 +10,10 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    env: { ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"), ROOT_DOMAIN: "localhost:3000" },
+    env: {
+      ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+      ROOT_DOMAIN: "localhost:3000",
+      DATABASE_URL: "postgres://unused:unused@localhost:1/unused",
+    },
   },
 });

@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: RouteContext<"/s/[shop]/media/
   return new Response(new Uint8Array(image), {
     headers: {
       "Content-Type": "image/webp",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       "X-Content-Type-Options": "nosniff",
     },
   });

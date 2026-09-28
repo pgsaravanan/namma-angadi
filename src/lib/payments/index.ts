@@ -15,7 +15,8 @@ export function getProvider(id: ProviderId) {
 }
 
 export function isProviderEnabled(id: ProviderId) {
-  return !PROVIDERS[id].devOnly || !env.isProduction;
+  const testSite = process.env.SITE_MODE === "preprod" && process.env.ENABLE_TEST_PAYMENTS === "true";
+  return !PROVIDERS[id].devOnly || !env.isProduction || testSite;
 }
 
 export function enabledProviders() {

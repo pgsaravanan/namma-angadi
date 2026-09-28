@@ -93,3 +93,15 @@ textarea {
   font: inherit;
   color: inherit;
 }
+
+.test-site-banner {
+  position: relative;
+  z-index: 100;
+  padding: 6px 16px;
+  background: #1c1512;
+  color: #fdf3d8;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+}

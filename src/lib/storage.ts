@@ -16,6 +16,70 @@ const MAX_EDGE: Record<ImageKind, number> = { products: 1200, categories: 1200, 
 
 export class ImageUploadError extends Error {}
 
+type Store = {
+  write(key: string, bytes: Buffer): Promise<void>;
+  read(key: string): Promise<Buffer | null>;
+  remove(key: string): Promise<void>;
+};
+
+const localStore: Store = {
+  async write(key, bytes) {
+    const filePath = path.join(UPLOAD_ROOT, key);
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, bytes);
+  },
+  async read(key) {
+    try {
+      return await readFile(path.join(UPLOAD_ROOT, key));
+    } catch {
+      return null;
+    }
+  },
+  async remove(key) {
+    await rm(path.join(UPLOAD_ROOT, key), { force: true });
+  },
+};
+
+function supabaseStore(url: string, serviceKey: string, bucket: string): Store {
+  const objectUrl = (key: string) => `${url}/storage/v1/object/${bucket}/${key}`;
+  const auth = { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey };
+  return {
+    async write(key, bytes) {
+      const response = await fetch(objectUrl(key), {
+        method: "POST",
+        headers: { ...auth, "Content-Type": "image/webp", "x-upsert": "true", "cache-control": "31536000" },
+        body: new Uint8Array(bytes),
+      });
+      if (!response.ok) {
+        console.error("Photo upload failed", response.status, await response.text());
+        throw new ImageUploadError("The photo couldn't be uploaded. Please try again in a moment.");
+      }
+    },
+    async read(key) {
+      const response = await fetch(objectUrl(key), { headers: auth, cache: "no-store" });
+      return response.ok ? Buffer.from(await response.arrayBuffer()) : null;
+    },
+    async remove(key) {
+      await fetch(`${url}/storage/v1/object/${bucket}`, {
+        method: "DELETE",
+        headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ prefixes: [key] }),
+      });
+    },
+  };
+}
+
+function store(): Store {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return url && key ? supabaseStore(url.replace(/\/$/, ""), key, process.env.SUPABASE_STORAGE_BUCKET || "media") : localStore;
+}
+
+export async function putStoredObject(key: string, bytes: Buffer) {
+  if (!KEY_PATTERN.test(key)) throw new Error(`Invalid storage key ${key}`);
+  await store().write(key, bytes);
+}
+
 function isSupportedImage(bytes: Buffer) {
   const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   const isPng = bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
@@ -41,9 +105,7 @@ export async function saveImage(shopId: string, file: File, kind: ImageKind) {
   }
 
   const key = `shops/${shopId}/${kind}/${randomToken(12)}`;
-  const filePath = path.join(UPLOAD_ROOT, key);
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, output);
+  await store().write(key, output);
   return `${MEDIA_PREFIX}${key}`;
 }
 
@@ -55,16 +117,12 @@ function keyFromUrl(url: string) {
 
 export async function deleteStoredImage(url: string | null) {
   const key = url && keyFromUrl(url);
-  if (key) await rm(path.join(UPLOAD_ROOT, key), { force: true });
+  if (key) await store().remove(key);
 }
 
 export async function readStoredImage(shopId: string, key: string) {
   if (!KEY_PATTERN.test(key) || !key.startsWith(`shops/${shopId}/`)) return null;
-  try {
-    return await readFile(path.join(UPLOAD_ROOT, key));
-  } catch {
-    return null;
-  }
+  return store().read(key);
 }
 
 export function saveProductImage(shopId: string, file: File) {
