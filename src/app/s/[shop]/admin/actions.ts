@@ -67,6 +67,7 @@ export async function requestStaffReset(_: FormState, formData: FormData): Promi
     const token = await createResetToken({ userId: user.id });
     await sendEmail({
       shopId: shop.id,
+      senderName: shop.name,
       to: user.email,
       subject: `Reset your ${shop.name} admin password`,
       text: `Hi ${user.name.split(" ")[0]},\n\nUse this link within an hour to choose a new password:\n${originFromHeaders(await headers())}/admin/reset/${token}\n\nIf you didn't ask for this, you can ignore this email.`,

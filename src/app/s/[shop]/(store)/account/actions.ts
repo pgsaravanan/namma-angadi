@@ -111,6 +111,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
     const link = `${originFromHeaders(await headers())}/account/reset/${token}`;
     await sendEmail({
       shopId: shop.id,
+      senderName: shop.name,
       to: account.email,
       subject: `Reset your ${shop.name} password`,
       text: `Hi ${account.name.split(" ")[0]},\n\nUse this link within an hour to choose a new password:\n${link}\n\nIf you didn't ask for this, you can ignore this email.`,

@@ -55,6 +55,7 @@ export function notifyOrderPaid(orderId: string) {
     for (const to of shopRecipients(order)) {
       await sendEmail({
         shopId: order.shopId,
+        senderName: order.shop.name,
         to,
         subject: `New order #${order.number} · ${formatPaise(order.totalPaise)} · ${order.customerName}`,
         replyTo: order.customerEmail,
@@ -78,6 +79,7 @@ export function notifyOrderPaid(orderId: string) {
     if (order.customerEmail) {
       await sendEmail({
         shopId: order.shopId,
+        senderName: order.shop.name,
         to: order.customerEmail,
         subject: `Your ${order.shop.name} order #${order.number} is confirmed`,
         replyTo: order.shop.supportEmail,
@@ -109,6 +111,7 @@ export function notifyStatusChange(orderId: string, status: OrderStatus) {
 
     await sendEmail({
       shopId: order.shopId,
+        senderName: order.shop.name,
       to: order.customerEmail,
       subject: `Order #${order.number}: ${label}`,
       replyTo: order.shop.supportEmail,

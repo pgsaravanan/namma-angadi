@@ -29,6 +29,7 @@ export async function createInviteLink(shop: InviteShop, userId: string) {
 async function sendInviteEmail(shop: InviteShop, to: string, name: string, role: ShopRole, link: string, invitedBy: string) {
   await sendEmail({
     shopId: shop.id,
+    senderName: shop.name,
     to,
     subject: `You're invited to manage ${shop.name}`,
     text: [
@@ -67,6 +68,7 @@ export async function inviteToShop(input: {
     await db.membership.create({ data: { shopId: input.shop.id, userId: existing.id, role: input.role } });
     await sendEmail({
       shopId: input.shop.id,
+      senderName: input.shop.name,
       to: email,
       subject: `You now have access to ${input.shop.name}`,
       text: `Hi ${existing.name.split(" ")[0]},\n\n${input.invitedBy} has added you as ${ROLE_LABELS[input.role]} of ${input.shop.name}.\nSign in with your usual password at ${shopAdminUrl(input.shop)}`,
