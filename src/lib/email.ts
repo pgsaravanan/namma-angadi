@@ -51,25 +51,45 @@ async function sendWithResend(apiKey: string, from: string, input: EmailInput): 
   return response.ok ? { ok: true } : { ok: false, error: `${response.status} ${(await response.text()).slice(0, 200)}` };
 }
 
-export async function sendEmail(input: EmailInput) {
-  const from = process.env.EMAIL_FROM;
+async function shopSender(shopId: string | null) {
+  if (!shopId) return null;
+  const shop = await db.shop.findUnique({ where: { id: shopId }, select: { senderEmail: true } });
+  return shop?.senderEmail ?? null;
+}
+
+async function deliver(from: string, input: EmailInput): Promise<Delivery> {
   const brevoKey = process.env.BREVO_API_KEY;
-  const resendKey = process.env.RESEND_API_KEY;
+  try {
+    return brevoKey ? await sendWithBrevo(brevoKey, from, input) : await sendWithResend(process.env.RESEND_API_KEY!, from, input);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "unknown" };
+  }
+}
+
+export async function sendEmail(input: EmailInput) {
+  const defaultFrom = process.env.EMAIL_FROM;
   const record = { shopId: input.shopId, to: input.to, subject: input.subject, text: forLog(input.text) };
 
-  if (!from || (!brevoKey && !resendKey)) {
+  if (!defaultFrom || (!process.env.BREVO_API_KEY && !process.env.RESEND_API_KEY)) {
     console.info(`[email not configured] to=${input.to} subject="${input.subject}"`);
     await db.outboundEmail.create({ data: { ...record, status: "logged" } });
     return;
   }
 
-  let delivery: Delivery;
-  try {
-    delivery = brevoKey ? await sendWithBrevo(brevoKey, from, input) : await sendWithResend(resendKey!, from, input);
-  } catch (error) {
-    delivery = { ok: false, error: error instanceof Error ? error.message : "unknown" };
+  const ownSender = await shopSender(input.shopId);
+  let delivery = await deliver(ownSender ?? defaultFrom, input);
+  let note: string | null = null;
+
+  if (!delivery.ok && ownSender && ownSender !== defaultFrom) {
+    note = `Shop sender ${ownSender} was refused (${delivery.error}); sent from ${defaultFrom} instead`;
+    delivery = await deliver(defaultFrom, input);
   }
+
   await db.outboundEmail.create({
-    data: { ...record, status: delivery.ok ? "sent" : "failed", error: delivery.ok ? null : delivery.error },
+    data: {
+      ...record,
+      status: delivery.ok ? "sent" : "failed",
+      error: delivery.ok ? note : [note, delivery.error].filter(Boolean).join(" · "),
+    },
   });
 }

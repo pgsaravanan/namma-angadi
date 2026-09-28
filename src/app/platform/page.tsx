@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "@/components/admin/AdminShell.module.scss";
 import { NewInviteButton } from "@/components/admin/MemberForm";
-import { CreateShopForm, CustomDomainForm } from "@/components/admin/PlatformForms";
+import { CreateShopForm, CustomDomainForm, SenderEmailForm } from "@/components/admin/PlatformForms";
 import ui from "@/components/ui/ui.module.scss";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,7 +10,7 @@ import { shopBaseUrl } from "@/lib/host";
 import { PAID_STATUSES } from "@/lib/order-status";
 import { PROVIDERS, isProviderId } from "@/lib/payments/catalog";
 import { logoutFromPlatform } from "../login/actions";
-import { createShop, newOwnerInvite, setCustomDomain, toggleShopStatus } from "./actions";
+import { createShop, newOwnerInvite, setCustomDomain, setSenderEmail, toggleShopStatus } from "./actions";
 
 export const metadata = { title: "Platform · Namma Angadi", robots: { index: false } };
 
@@ -57,6 +57,7 @@ export default async function PlatformPage() {
                   <th>Payments</th>
                   <th>Paid orders</th>
                   <th>Custom domain</th>
+                  <th>Sends email from</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -87,6 +88,9 @@ export default async function PlatformPage() {
                       <td>{shop._count.orders}</td>
                       <td>
                         <CustomDomainForm action={setCustomDomain.bind(null, shop.id)} domain={shop.customDomain} />
+                      </td>
+                      <td>
+                        <SenderEmailForm action={setSenderEmail.bind(null, shop.id)} senderEmail={shop.senderEmail} />
                       </td>
                       <td>
                         <form action={toggleShopStatus.bind(null, shop.id)}>

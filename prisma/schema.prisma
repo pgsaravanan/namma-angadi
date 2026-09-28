@@ -60,6 +60,7 @@ model Shop {
   shopState              String?
   defaultGstRate         Int        @default(5)
   notifyEmail            String?
+  senderEmail            String?
   logoUrl                String?
   heroImageUrl           String?
   heroTitle              String?

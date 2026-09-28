@@ -64,6 +64,21 @@ export async function toggleShopStatus(shopId: string) {
   revalidatePath("/platform");
 }
 
+export async function setSenderEmail(shopId: string, _: FormState, formData: FormData): Promise<FormState> {
+  await requirePlatformAdmin();
+  const raw = String(formData.get("senderEmail") ?? "").trim().toLowerCase();
+  const parsed = z.union([z.email("Enter a valid email"), z.literal("")]).safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  await db.shop.update({ where: { id: shopId }, data: { senderEmail: parsed.data || null } });
+  revalidatePath("/platform");
+  return {
+    success: parsed.data
+      ? "Saved. Make sure this address is a verified sender in Brevo; until then emails use the default sender."
+      : "This shop now uses the default sender",
+  };
+}
+
 const DOMAIN_PATTERN = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 
 export async function setCustomDomain(shopId: string, _: FormState, formData: FormData): Promise<FormState> {

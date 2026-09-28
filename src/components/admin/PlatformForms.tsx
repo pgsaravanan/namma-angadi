@@ -43,6 +43,27 @@ export function CreateShopForm({ action, rootDomain }: { action: Action; rootDom
   );
 }
 
+export function SenderEmailForm({ action, senderEmail }: { action: Action; senderEmail: string | null }) {
+  const [state, formAction] = useActionState(action, undefined);
+
+  return (
+    <form action={formAction} className={styles.actions}>
+      <input
+        className={`${ui.input} ${styles.domainInput}`}
+        name="senderEmail"
+        type="email"
+        defaultValue={senderEmail ?? ""}
+        placeholder="Default sender"
+        aria-label="Sends email from"
+      />
+      <SubmitButton variant="secondary" size="small">
+        Save
+      </SubmitButton>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
 export function CustomDomainForm({ action, domain }: { action: Action; domain: string | null }) {
   const [state, formAction] = useActionState(action, undefined);
 
