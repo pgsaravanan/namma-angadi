@@ -1,8 +1,10 @@
 import Link from "next/link";
 import styles from "@/components/admin/AdminShell.module.scss";
+import { TestEmailForm } from "@/components/admin/TestEmailForm";
 import ui from "@/components/ui/ui.module.scss";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendTestEmail } from "./actions";
 import { indiaDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Email log · Namma Angadi", robots: { index: false } };
@@ -28,13 +30,17 @@ export default async function EmailLogPage() {
         <div>
           <h1 className={styles.pageTitle}>Email log</h1>
           <p className={ui.muted}>
-            Every email the platform sends. Until RESEND_API_KEY and EMAIL_FROM are set, emails are only recorded here.
+            Every email the platform sends. Until BREVO_API_KEY (or RESEND_API_KEY) and EMAIL_FROM are set, emails are only recorded here.
           </p>
         </div>
         <Link href="/platform" className={`${ui.button} ${ui.secondary}`}>
           Back to shops
         </Link>
       </div>
+      <section className={ui.card}>
+        <h2 className={styles.cardTitle}>Send a test email</h2>
+        <TestEmailForm action={sendTestEmail} />
+      </section>
       {emails.length === 0 && <p className={`${ui.card} ${ui.empty}`}>No emails yet.</p>}
       {emails.map((email) => (
         <details key={email.id} className={ui.card}>
