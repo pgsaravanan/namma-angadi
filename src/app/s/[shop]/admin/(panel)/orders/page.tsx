@@ -23,7 +23,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/s/[shop]/
   const { status: rawStatus, attention } = await searchParams;
   const status = typeof rawStatus === "string" && rawStatus in OrderStatus ? (rawStatus as OrderStatus) : undefined;
 
-  await releaseExpiredOrders(shop.id);
+  await releaseExpiredOrders(shop.id, { force: true });
   const orders = await db.order.findMany({
     where: {
       shopId: shop.id,

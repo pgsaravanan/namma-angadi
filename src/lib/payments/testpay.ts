@@ -1,7 +1,7 @@
 import "server-only";
 import { createHmac } from "node:crypto";
 import { after } from "next/server";
-import type { SimulatedPayment } from "@/generated/prisma/client";
+import { Prisma, type SimulatedPayment } from "@/generated/prisma/client";
 import { isValidHmac, randomToken } from "../crypto";
 import { db } from "../db";
 import { env } from "../env";
@@ -113,18 +113,26 @@ export async function simulateUpiPayment(
 
   const declined = input.scenario === "decline";
   const settlesAt = new Date(Date.now() + (input.scenario === "slow" ? SLOW_BANK_SECONDS * 1000 : 0));
-  const payment = await db.simulatedPayment.create({
-    data: {
-      id: `tp_pay_${randomToken(12)}`,
-      shopId: config.shopId,
-      providerOrderId: input.providerOrderId,
-      amountPaise: input.amountPaise,
-      method: input.method,
-      scenario: input.scenario,
-      status: declined ? "failed" : "captured",
-      settlesAt,
-    },
-  });
+  const payment = await db.simulatedPayment
+    .create({
+      data: {
+        id: `tp_pay_${randomToken(12)}`,
+        shopId: config.shopId,
+        providerOrderId: input.providerOrderId,
+        activeKey: declined ? null : `${config.shopId}:${input.providerOrderId}`,
+        amountPaise: input.amountPaise,
+        method: input.method,
+        scenario: input.scenario,
+        status: declined ? "failed" : "captured",
+        settlesAt,
+      },
+    })
+    .catch((error: unknown) => {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new PaymentProviderError("This request was already approved");
+      }
+      throw error;
+    });
 
   const event: SimulatorWebhook = {
     id: `tp_evt_${randomToken(12)}`,

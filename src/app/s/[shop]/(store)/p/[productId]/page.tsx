@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/store/ProductCard";
 import { ProductPurchase } from "@/components/store/ProductPurchase";
@@ -10,14 +11,14 @@ import styles from "../../store.module.scss";
 
 const RELATED_COUNT = 4;
 
-async function findProduct(productId: string) {
+const findProduct = cache(async (productId: string) => {
   const shop = await requireShop();
   const product = await db.product.findFirst({
     where: { id: productId, shopId: shop.id, isActive: true },
     include: { category: true },
   });
   return { shop, product };
-}
+});
 
 export async function generateMetadata({ params }: PageProps<"/s/[shop]/p/[productId]">) {
   const { product } = await findProduct((await params).productId);

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["*.localhost", "**.nip.io"],
   serverExternalPackages: ["better-sqlite3", "sharp"],
   experimental: {
-    serverActions: { bodySizeLimit: "6mb" },
+    serverActions: { bodySizeLimit: "12mb" },
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

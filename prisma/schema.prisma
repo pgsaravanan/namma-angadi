@@ -248,6 +248,7 @@ model SimulatedPayment {
   id              String   @id
   shopId          String
   providerOrderId String
+  activeKey       String?  @unique
   amountPaise     Int
   method          String
   scenario        String

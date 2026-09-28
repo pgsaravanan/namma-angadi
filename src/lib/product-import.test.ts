@@ -55,6 +55,12 @@ describe("readProductCsv", () => {
     expect(issues.map((issue) => issue.line)).toEqual([3, 4, 5]);
   });
 
+  it("flags a product name repeated within the same file", () => {
+    const { products, issues } = readProductCsv("name,price\nMurukku,120\nmurukku,130", 1);
+    expect(products).toHaveLength(1);
+    expect(issues).toEqual([{ line: 3, message: '"murukku" is already on row 2' }]);
+  });
+
   it("requires name and price columns", () => {
     expect(readProductCsv("foo,bar\n1,2", 1).issues[0].message).toMatch(/name/);
   });

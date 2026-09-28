@@ -77,6 +77,8 @@ export function readProductCsv(text: string, defaultStock: number) {
     return { products, issues: [{ line: 1, message: `Import up to ${MAX_IMPORT_ROWS} products at a time` }] };
   }
 
+  const seenNames = new Map<string, number>();
+
   dataRows.forEach((cells, index) => {
     const line = index + 2;
     const cell = (column: number) => (column === -1 ? undefined : cells[column]?.trim());
@@ -101,8 +103,19 @@ export function readProductCsv(text: string, defaultStock: number) {
       category: cell(columns.category) ?? "",
     });
 
-    if (parsed.success) products.push({ ...parsed.data, line });
-    else issues.push({ line, message: parsed.error.issues[0]?.message ?? "Invalid row" });
+    if (!parsed.success) {
+      issues.push({ line, message: parsed.error.issues[0]?.message ?? "Invalid row" });
+      return;
+    }
+
+    const key = parsed.data.name.toLowerCase();
+    const firstLine = seenNames.get(key);
+    if (firstLine) {
+      issues.push({ line, message: `"${parsed.data.name}" is already on row ${firstLine}` });
+      return;
+    }
+    seenNames.set(key, line);
+    products.push({ ...parsed.data, line });
   });
 
   return { products, issues };

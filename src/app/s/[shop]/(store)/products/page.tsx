@@ -33,15 +33,16 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
   const categories = await listCategories(shop.id);
   const category = categories.find((candidate) => candidate.id === categoryId);
 
-  const products = await db.product.findMany({
-    where: {
-      shopId: shop.id,
-      isActive: true,
-      ...(category && { categoryId: category.id }),
-      ...(query && { OR: [{ name: { contains: query } }, { description: { contains: query } }] }),
-    },
-    orderBy: sort.orderBy,
-  });
+  const needle = query.toLowerCase();
+  const products = (
+    await db.product.findMany({
+      where: { shopId: shop.id, isActive: true, ...(category && { categoryId: category.id }) },
+      orderBy: sort.orderBy,
+    })
+  ).filter(
+    (product) =>
+      !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),
+  );
 
   const linkFor = (nextCategory?: string) => {
     const search = new URLSearchParams();

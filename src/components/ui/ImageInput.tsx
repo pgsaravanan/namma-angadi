@@ -57,6 +57,9 @@ export function ImageInput({ name, label, currentUrl, allowLink, pasteAnywhere, 
   useEffect(() => {
     if (!pasteAnywhere) return;
     function onPaste(event: ClipboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const typingText = target?.closest("input, textarea, [contenteditable='true']");
+      if (typingText && event.clipboardData?.types.includes("text/plain")) return;
       const file = imageFrom(event.clipboardData?.items);
       if (!file) return;
       event.preventDefault();

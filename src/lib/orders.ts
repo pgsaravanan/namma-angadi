@@ -79,7 +79,14 @@ async function closeUnpaidOrder(orderId: string, status: Extract<OrderStatus, "E
   });
 }
 
-export async function releaseExpiredOrders(shopId: string) {
+const RELEASE_INTERVAL_MS = 60_000;
+const lastRelease = new Map<string, number>();
+
+export async function releaseExpiredOrders(shopId: string, { force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - (lastRelease.get(shopId) ?? 0) < RELEASE_INTERVAL_MS) return;
+  lastRelease.set(shopId, now);
+
   const expired = await db.order.findMany({
     where: { shopId, status: "PENDING", expiresAt: { lt: new Date() } },
     select: { id: true },
@@ -168,7 +175,7 @@ export async function createCheckout(shop: Shop, input: CheckoutInput, origin: s
   const config = requirePaymentConfig(shop);
   const provider = getProvider(config.provider);
 
-  await releaseExpiredOrders(shop.id);
+  await releaseExpiredOrders(shop.id, { force: true });
   await releaseEarlierAttempts(shop.id, input.customer.phone);
   const order = await placeOrder(shop, input);
 
