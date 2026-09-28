@@ -5,7 +5,11 @@ import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { ImageInput } from "@/components/ui/ImageInput";
 import ui from "@/components/ui/ui.module.scss";
+import { StateSelect } from "@/components/ui/StateSelect";
+import { GST_RATES } from "@/lib/food";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/payment-methods";
+import { WEEK_DAYS } from "@/lib/shop-hours";
+import styles from "./AdminShell.module.scss";
 import type { ProviderId, ProviderInfo } from "@/lib/payments/catalog";
 
 type Action = (state: FormState, formData: FormData) => Promise<FormState>;
@@ -212,6 +216,182 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
       <FormMessage state={state} />
       <div>
         <SubmitButton>Save storefront</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+type OrderingProps = {
+  action: Action;
+  shop: {
+    isAcceptingOrders: boolean;
+    openTime: string | null;
+    closeTime: string | null;
+    openDays: string;
+    deliveryEnabled: boolean;
+    pickupEnabled: boolean;
+    deliveryFee: string;
+    freeDeliveryAbove: string;
+    minOrder: string;
+    deliveryPincodes: string | null;
+    deliveryNote: string | null;
+    notifyEmail: string | null;
+  };
+};
+
+export function OrderingForm({ action, shop }: OrderingProps) {
+  const [state, formAction] = useActionState(action, undefined);
+  const openDays = shop.openDays.split(",");
+
+  return (
+    <form action={formAction} className={ui.form}>
+      <label className={ui.checkbox}>
+        <input type="checkbox" name="isAcceptingOrders" defaultChecked={shop.isAcceptingOrders} />
+        <strong>Accepting orders</strong> (turn off to pause the shop, e.g. on holidays)
+      </label>
+
+      <fieldset className={ui.form}>
+        <legend className={ui.label}>Opening hours (India time)</legend>
+        <div className={ui.row}>
+          <label className={ui.field}>
+            <span className={ui.hint}>Opens</span>
+            <input className={ui.input} name="openTime" type="time" defaultValue={shop.openTime ?? ""} />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.hint}>Closes (last order)</span>
+            <input className={ui.input} name="closeTime" type="time" defaultValue={shop.closeTime ?? ""} />
+          </label>
+        </div>
+        <div className={styles.days}>
+          {WEEK_DAYS.map((day) => (
+            <label key={day.id} className={ui.checkbox}>
+              <input type="checkbox" name="openDays" value={day.id} defaultChecked={openDays.includes(day.id)} />
+              {day.label}
+            </label>
+          ))}
+        </div>
+        <span className={ui.hint}>Leave the times empty to take orders at any time.</span>
+      </fieldset>
+
+      <fieldset className={ui.form}>
+        <legend className={ui.label}>Delivery and pickup</legend>
+        <label className={ui.checkbox}>
+          <input type="checkbox" name="deliveryEnabled" defaultChecked={shop.deliveryEnabled} />
+          Home delivery
+        </label>
+        <label className={ui.checkbox}>
+          <input type="checkbox" name="pickupEnabled" defaultChecked={shop.pickupEnabled} />
+          Customers can pick up from the shop
+        </label>
+        <div className={ui.row}>
+          <label className={ui.field}>
+            <span className={ui.hint}>Delivery fee (₹)</span>
+            <input className={ui.input} name="deliveryFee" type="number" min="0" step="1" defaultValue={shop.deliveryFee} />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.hint}>Free delivery above (₹)</span>
+            <input
+              className={ui.input}
+              name="freeDeliveryAbove"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={shop.freeDeliveryAbove}
+              placeholder="No free delivery"
+            />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.hint}>Minimum order (₹)</span>
+            <input className={ui.input} name="minOrder" type="number" min="0" step="1" defaultValue={shop.minOrder} />
+          </label>
+        </div>
+        <label className={ui.field}>
+          <span className={ui.hint}>PIN codes you deliver to (leave empty to deliver anywhere)</span>
+          <textarea
+            className={ui.input}
+            name="deliveryPincodes"
+            defaultValue={shop.deliveryPincodes ?? ""}
+            placeholder="625001, 625002, 625020"
+          />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.hint}>Delivery note shown at checkout</span>
+          <input
+            className={ui.input}
+            name="deliveryNote"
+            maxLength={140}
+            defaultValue={shop.deliveryNote ?? ""}
+            placeholder="Delivered within 2 hours in Madurai"
+          />
+        </label>
+      </fieldset>
+
+      <label className={ui.field}>
+        <span className={ui.label}>Send new-order alerts to</span>
+        <input className={ui.input} name="notifyEmail" type="email" defaultValue={shop.notifyEmail ?? ""} placeholder="Your email" />
+        <span className={ui.hint}>Leave empty to use the support email or the owner&apos;s login email.</span>
+      </label>
+
+      <FormMessage state={state} />
+      <div>
+        <SubmitButton>Save ordering settings</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+type ComplianceProps = {
+  action: Action;
+  shop: {
+    legalName: string | null;
+    gstin: string | null;
+    shopState: string | null;
+    fssaiNumber: string | null;
+    defaultGstRate: number;
+  };
+};
+
+export function ComplianceForm({ action, shop }: ComplianceProps) {
+  const [state, formAction] = useActionState(action, undefined);
+
+  return (
+    <form action={formAction} className={ui.form}>
+      <div className={ui.row}>
+        <label className={ui.field}>
+          <span className={ui.label}>Registered business name</span>
+          <input className={ui.input} name="legalName" defaultValue={shop.legalName ?? ""} placeholder="As on GST or FSSAI certificate" />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>FSSAI licence / registration no.</span>
+          <input className={ui.input} name="fssaiNumber" inputMode="numeric" maxLength={14} defaultValue={shop.fssaiNumber ?? ""} />
+          <span className={ui.hint}>Food businesses must show this. It appears in the store footer and on bills.</span>
+        </label>
+      </div>
+      <div className={ui.row}>
+        <label className={ui.field}>
+          <span className={ui.label}>GSTIN (if registered)</span>
+          <input className={ui.input} name="gstin" maxLength={15} defaultValue={shop.gstin ?? ""} placeholder="33ABCDE1234F1Z5" />
+          <span className={ui.hint}>With a GSTIN, bills become tax invoices with CGST/SGST.</span>
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>State of registration</span>
+          <StateSelect name="shopState" defaultValue={shop.shopState} />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>Default GST rate</span>
+          <select className={ui.input} name="defaultGstRate" defaultValue={shop.defaultGstRate}>
+            {GST_RATES.map((rate) => (
+              <option key={rate} value={rate}>
+                {rate}%
+              </option>
+            ))}
+          </select>
+          <span className={ui.hint}>Most food items and restaurant services are 5%. Check with your accountant.</span>
+        </label>
+      </div>
+      <FormMessage state={state} />
+      <div>
+        <SubmitButton>Save business details</SubmitButton>
       </div>
     </form>
   );

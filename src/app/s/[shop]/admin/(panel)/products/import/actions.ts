@@ -14,7 +14,7 @@ export type PreviewRow = ImportRow & { line: number; existingId: string | null }
 export type ImportState =
   | { step: "start"; error?: string }
   | { step: "preview"; rows: PreviewRow[]; issues: ImportIssue[] }
-  | { step: "done"; created: number; updated: number; skipped: number };
+  | { step: "done"; created: number; updated: number; skipped: number; keptPackSizes: string[] };
 
 async function existingByName(shopId: string) {
   const products = await db.product.findMany({ where: { shopId }, select: { id: true, name: true } });
@@ -62,6 +62,12 @@ export async function commitImport(_: ImportState, formData: FormData): Promise<
   if (!parsed.success) return { step: "start", error: "Something went wrong. Please preview the file again." };
 
   const existing = await existingByName(shop.id);
+  const withPackSizes = new Set(
+    (await db.productVariant.findMany({ where: { product: { shopId: shop.id } }, select: { productId: true } })).map(
+      (variant) => variant.productId,
+    ),
+  );
+  const keptPackSizes: string[] = [];
   let created = 0;
   let updated = 0;
   let skipped = 0;
@@ -74,11 +80,18 @@ export async function commitImport(_: ImportState, formData: FormData): Promise<
         continue;
       }
       if (matchId) {
-        const { imageUrl, ...fields } = row;
+        const { imageUrl, pricePaise, stock, ...fields } = row;
+        const keepPackSizes = withPackSizes.has(matchId);
+        if (keepPackSizes) keptPackSizes.push(row.name);
         const categoryId = category ? await findOrCreateCategory(shop.id, category, tx) : undefined;
         await tx.product.update({
           where: { id: matchId },
-          data: { ...fields, ...(imageUrl && { imageUrl }), ...(categoryId && { categoryId }) },
+          data: {
+            ...fields,
+            ...(!keepPackSizes && { pricePaise, stock }),
+            ...(imageUrl && { imageUrl }),
+            ...(categoryId && { categoryId }),
+          },
         });
         updated++;
       } else {
@@ -91,5 +104,5 @@ export async function commitImport(_: ImportState, formData: FormData): Promise<
   });
 
   revalidatePath("/admin/products");
-  return { step: "done", created, updated, skipped };
+  return { step: "done", created, updated, skipped, keptPackSizes };
 }

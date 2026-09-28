@@ -3,9 +3,9 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/store/ProductCard";
 import { ProductPurchase } from "@/components/store/ProductPurchase";
+import { VegMark } from "@/components/store/VegMark";
 import { db } from "@/lib/db";
 import { formatIndianMobile } from "@/lib/india";
-import { formatPaise } from "@/lib/money";
 import { requireShop } from "@/lib/tenant";
 import styles from "../../store.module.scss";
 
@@ -15,7 +15,7 @@ const findProduct = cache(async (productId: string) => {
   const shop = await requireShop();
   const product = await db.product.findFirst({
     where: { id: productId, shopId: shop.id, isActive: true },
-    include: { category: true },
+    include: { category: true, variants: { orderBy: { position: "asc" } } },
   });
   return { shop, product };
 });
@@ -39,6 +39,7 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
     },
     orderBy: { createdAt: "desc" },
     take: RELATED_COUNT,
+    include: { variants: { select: { pricePaise: true, stock: true } } },
   });
 
   return (
@@ -60,10 +61,17 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
               <Link href="/products">Shop</Link>
             )}
           </nav>
-          <h1 className={styles.productTitle}>{product.name}</h1>
-          <div className={styles.productPrice}>{formatPaise(product.pricePaise)}</div>
+          <h1 className={styles.productTitle}>
+            <VegMark type={product.foodType} /> {product.name}
+          </h1>
           {product.description && <p className={styles.productDescription}>{product.description}</p>}
-          <ProductPurchase shopId={shop.id} productId={product.id} stock={product.stock} />
+          <ProductPurchase
+            shopId={shop.id}
+            productId={product.id}
+            pricePaise={product.pricePaise}
+            stock={product.stock}
+            variants={product.variants.map(({ id, label, pricePaise, stock }) => ({ id, label, pricePaise, stock }))}
+          />
           <p className={styles.note}>
             Pay securely by UPI at checkout.
             {shop.supportPhone && ` Questions? Call ${shop.contactName ?? shop.name} on ${formatIndianMobile(shop.supportPhone)}.`}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import styles from "@/components/admin/AdminShell.module.scss";
 import { CreateShopForm, CustomDomainForm } from "@/components/admin/PlatformForms";
 import ui from "@/components/ui/ui.module.scss";
@@ -27,6 +28,9 @@ export default async function PlatformPage() {
       <header className={styles.topbar}>
         <strong className={styles.shopName}>Namma Angadi · Platform</strong>
         <div className={styles.actions}>
+          <Link href="/platform/emails" className={`${ui.button} ${ui.secondary} ${ui.small}`}>
+            Email log
+          </Link>
           <span className={ui.muted}>{admin.name}</span>
           <form action={logoutFromPlatform}>
             <button type="submit" className={`${ui.button} ${ui.secondary} ${ui.small}`}>

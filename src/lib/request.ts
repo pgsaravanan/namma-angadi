@@ -21,7 +21,8 @@ export function isRateLimited(key: string, limit: number, windowMs: number) {
 }
 
 export function clientIpFrom(headers: Headers) {
-  if (process.env.TRUST_PROXY_HEADERS !== "true") return "direct";
+  const trusted = process.env.TRUST_PROXY_HEADERS === "true" || process.env.VERCEL === "1";
+  if (!trusted) return "direct";
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 

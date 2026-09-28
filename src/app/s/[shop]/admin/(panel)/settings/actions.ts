@@ -13,7 +13,11 @@ import {
   PaymentProviderError,
   readStoredCredentials,
 } from "@/lib/payments";
+import { GST_RATES } from "@/lib/food";
+import { INDIAN_STATES } from "@/lib/india";
+import { rupeesToPaise } from "@/lib/money";
 import { isProviderId, PROVIDERS } from "@/lib/payments/catalog";
+import { isValidTime, WEEK_DAYS } from "@/lib/shop-hours";
 import { deleteStoredImage, ImageUploadError, resolveImageField } from "@/lib/storage";
 
 const detailsSchema = z.object({
@@ -131,4 +135,102 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
 
   revalidatePath("/", "layout");
   return { success: "Storefront saved. Open your store to see it." };
+}
+
+const money = z.preprocess((value) => (value === "" || value === null ? undefined : value), z.coerce.number().min(0).max(1_00_000).optional());
+const time = z.union([z.string().refine(isValidTime, "Use a time like 08:00"), z.literal("")]);
+const DAY_IDS = WEEK_DAYS.map((day) => day.id) as [string, ...string[]];
+
+const orderingSchema = z
+  .object({
+    isAcceptingOrders: z.boolean(),
+    openTime: time,
+    closeTime: time,
+    openDays: z.array(z.enum(DAY_IDS)).min(1, "Choose at least one open day"),
+    deliveryEnabled: z.boolean(),
+    pickupEnabled: z.boolean(),
+    deliveryFee: money,
+    freeDeliveryAbove: money,
+    minOrder: money,
+    deliveryPincodes: z.string().max(2000),
+    deliveryNote: z.string().trim().max(140),
+    notifyEmail: z.union([z.email("Enter a valid email for order alerts"), z.literal("")]),
+  })
+  .refine((data) => data.deliveryEnabled || data.pickupEnabled, "Turn on delivery, pickup or both")
+  .refine((data) => Boolean(data.openTime) === Boolean(data.closeTime), "Enter both the opening and closing time")
+  .refine((data) => !data.openTime || data.openTime < data.closeTime, "Closing time must be after opening time");
+
+export async function saveOrdering(_: FormState, formData: FormData): Promise<FormState> {
+  const { shop } = await requireShopPermission("settings:manage");
+  const parsed = orderingSchema.safeParse({
+    isAcceptingOrders: formData.get("isAcceptingOrders") === "on",
+    openTime: formData.get("openTime") ?? "",
+    closeTime: formData.get("closeTime") ?? "",
+    openDays: formData.getAll("openDays"),
+    deliveryEnabled: formData.get("deliveryEnabled") === "on",
+    pickupEnabled: formData.get("pickupEnabled") === "on",
+    deliveryFee: formData.get("deliveryFee"),
+    freeDeliveryAbove: formData.get("freeDeliveryAbove"),
+    minOrder: formData.get("minOrder"),
+    deliveryPincodes: formData.get("deliveryPincodes") ?? "",
+    deliveryNote: formData.get("deliveryNote") ?? "",
+    notifyEmail: formData.get("notifyEmail") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const data = parsed.data;
+  const pincodes = [...new Set(data.deliveryPincodes.split(/[\s,]+/).filter(Boolean))];
+  const invalid = pincodes.find((pincode) => !/^[1-9][0-9]{5}$/.test(pincode));
+  if (invalid) return { error: `"${invalid}" is not a valid PIN code` };
+
+  await db.shop.update({
+    where: { id: shop.id },
+    data: {
+      isAcceptingOrders: data.isAcceptingOrders,
+      openTime: data.openTime || null,
+      closeTime: data.closeTime || null,
+      openDays: data.openDays.join(","),
+      deliveryEnabled: data.deliveryEnabled,
+      pickupEnabled: data.pickupEnabled,
+      deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0,
+      freeDeliveryAbovePaise: data.freeDeliveryAbove ? rupeesToPaise(data.freeDeliveryAbove) : null,
+      minOrderPaise: data.minOrder ? rupeesToPaise(data.minOrder) : 0,
+      deliveryPincodes: pincodes.length ? pincodes.join(", ") : null,
+      deliveryNote: data.deliveryNote || null,
+      notifyEmail: data.notifyEmail || null,
+    },
+  });
+  revalidatePath("/", "layout");
+  return { success: "Ordering and delivery settings saved" };
+}
+
+const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+
+const complianceSchema = z.object({
+  legalName: z.string().trim().max(120),
+  gstin: z.union([z.string().trim().toUpperCase().regex(GSTIN_PATTERN, "GSTIN should be 15 characters, e.g. 33ABCDE1234F1Z5"), z.literal("")]),
+  shopState: z.union([z.enum(INDIAN_STATES), z.literal("")]),
+  fssaiNumber: z.union([z.string().trim().regex(/^\d{14}$/, "FSSAI licence number has 14 digits"), z.literal("")]),
+  defaultGstRate: z.coerce.number().refine((rate) => GST_RATES.includes(rate as never), "Choose a GST rate"),
+});
+
+export async function saveCompliance(_: FormState, formData: FormData): Promise<FormState> {
+  const { shop } = await requireShopPermission("settings:manage");
+  const parsed = complianceSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { legalName, gstin, shopState, fssaiNumber, defaultGstRate } = parsed.data;
+  if (gstin && !shopState) return { error: "Choose the state your GSTIN is registered in" };
+
+  await db.shop.update({
+    where: { id: shop.id },
+    data: {
+      legalName: legalName || null,
+      gstin: gstin || null,
+      shopState: shopState || null,
+      fssaiNumber: fssaiNumber || null,
+      defaultGstRate,
+    },
+  });
+  revalidatePath("/", "layout");
+  return { success: "Business and tax details saved" };
 }

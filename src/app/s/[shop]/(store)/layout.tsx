@@ -2,6 +2,8 @@ import Link from "next/link";
 import { StoreHeader } from "@/components/store/StoreHeader";
 import { listCategories } from "@/lib/categories";
 import { formatIndianMobile } from "@/lib/india";
+import { POLICIES } from "@/lib/policies";
+import { openingHoursText, shopAvailability } from "@/lib/shop-hours";
 import { requireShop } from "@/lib/tenant";
 import styles from "./store.module.scss";
 
@@ -23,10 +25,13 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   }
 
   const categories = await listCategories(shop.id);
+  const availability = shopAvailability(shop);
+  const hours = openingHoursText(shop);
 
   return (
     <>
       <StoreHeader shop={shop} categories={categories} />
+      {!availability.open && <div className={styles.closedBar}>{availability.message}</div>}
       <main className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
@@ -62,13 +67,23 @@ export default async function StoreLayout({ children }: { children: React.ReactN
                   <a href={`mailto:${shop.supportEmail}`}>{shop.supportEmail}</a>
                 </li>
               )}
+              {hours && <li>{hours}</li>}
             </ul>
           </div>
         </div>
         <div className={styles.footerBottom}>
           <span>
-            © {new Date().getFullYear()} {shop.name}
+            © {new Date().getFullYear()} {shop.legalName ?? shop.name}
+            {shop.fssaiNumber && ` · FSSAI Lic. No. ${shop.fssaiNumber}`}
+            {shop.gstin && ` · GSTIN ${shop.gstin}`}
           </span>
+          <nav className={styles.footerLegal} aria-label="Shop policies">
+            {POLICIES.map((policy) => (
+              <Link key={policy.slug} href={`/policies/${policy.slug}`}>
+                {policy.title}
+              </Link>
+            ))}
+          </nav>
           <span>Secure UPI payments · Powered by Namma Angadi</span>
         </div>
       </footer>

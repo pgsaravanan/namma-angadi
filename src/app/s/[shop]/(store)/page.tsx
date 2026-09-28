@@ -19,6 +19,7 @@ export default async function StoreHomePage() {
       where: { shopId: shop.id, isActive: true },
       orderBy: { createdAt: "desc" },
       take: NEW_IN_COUNT,
+      include: { variants: { select: { pricePaise: true, stock: true } } },
     }),
     db.product.findMany({
       where: { shopId: shop.id, isActive: true, imageUrl: { not: null }, categoryId: { not: null } },

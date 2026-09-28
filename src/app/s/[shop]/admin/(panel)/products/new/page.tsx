@@ -11,7 +11,7 @@ export default async function NewProductPage() {
   return (
     <div className={styles.section}>
       <h1 className={styles.pageTitle}>Add product</h1>
-      <ProductForm action={saveProduct.bind(null, null)} categories={categories} />
+      <ProductForm action={saveProduct.bind(null, null)} categories={categories} defaultGstRate={shop.defaultGstRate} />
     </div>
   );
 }

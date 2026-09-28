@@ -1,13 +1,21 @@
 import Link from "next/link";
-import type { Product } from "@/generated/prisma/client";
+import type { Product, ProductVariant } from "@/generated/prisma/client";
+import ui from "@/components/ui/ui.module.scss";
 import { formatPaise } from "@/lib/money";
 import { AddToCartButton } from "./AddToCartButton";
 import styles from "./ProductCard.module.scss";
+import { VegMark } from "./VegMark";
 
-type CardProduct = Pick<Product, "id" | "shopId" | "name" | "imageUrl" | "pricePaise" | "stock">;
+export type CardProduct = Pick<Product, "id" | "shopId" | "name" | "imageUrl" | "pricePaise" | "stock" | "foodType"> & {
+  variants: Pick<ProductVariant, "pricePaise" | "stock">[];
+};
 
 export function ProductCard({ product }: { product: CardProduct }) {
-  const inStock = product.stock > 0;
+  const hasVariants = product.variants.length > 0;
+  const stock = hasVariants ? product.variants.reduce((sum, variant) => sum + variant.stock, 0) : product.stock;
+  const fromPrice = hasVariants ? Math.min(...product.variants.map((variant) => variant.pricePaise)) : product.pricePaise;
+  const inStock = stock > 0;
+
   return (
     <article className={styles.card}>
       <Link href={`/p/${product.id}`} className={styles.media}>
@@ -20,16 +28,25 @@ export function ProductCard({ product }: { product: CardProduct }) {
           </span>
         )}
         {!inStock && <span className={styles.badge}>Sold out</span>}
-        {inStock && product.stock <= 5 && <span className={styles.badge}>Only {product.stock} left</span>}
+        {inStock && !hasVariants && stock <= 5 && <span className={styles.badge}>Only {stock} left</span>}
       </Link>
       <div className={styles.body}>
         <Link href={`/p/${product.id}`} className={styles.name}>
-          {product.name}
+          <VegMark type={product.foodType} /> {product.name}
         </Link>
-        <div className={styles.price}>{formatPaise(product.pricePaise)}</div>
+        <div className={styles.price}>
+          {hasVariants && <span className={styles.from}>From </span>}
+          {formatPaise(fromPrice)}
+        </div>
       </div>
       <div className={styles.quickAdd}>
-        <AddToCartButton shopId={product.shopId} productId={product.id} inStock={inStock} compact />
+        {hasVariants && inStock ? (
+          <Link href={`/p/${product.id}`} className={`${ui.button} ${ui.secondary} ${ui.small} ${ui.block}`}>
+            Choose size
+          </Link>
+        ) : (
+          <AddToCartButton shopId={product.shopId} productId={product.id} inStock={inStock} compact />
+        )}
       </div>
     </article>
   );

@@ -10,8 +10,9 @@ import { releaseExpiredOrders } from "@/lib/orders";
 
 const FILTERS: { label: string; status?: OrderStatus }[] = [
   { label: "All" },
-  { label: "To ship", status: "PAID" },
-  { label: "Shipped", status: "SHIPPED" },
+  { label: "New", status: "PAID" },
+  { label: "Preparing", status: "PREPARING" },
+  { label: "Out / ready", status: "SHIPPED" },
   { label: "Awaiting payment", status: "PENDING" },
   { label: "Refunded", status: "REFUNDED" },
 ];
@@ -78,7 +79,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/s/[shop]/
                     </td>
                     <td>{formatPaise(order.totalPaise)}</td>
                     <td>
-                      <StatusBadge status={order.status} />
+                      <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
                       {order.attentionNote && <div className={ui.hint}>Needs attention</div>}
                     </td>
                   </tr>

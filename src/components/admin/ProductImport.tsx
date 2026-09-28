@@ -26,6 +26,13 @@ export function ProductImport({ preview, commit }: Props) {
         <p className={`${ui.message} ${ui.success}`}>
           Import finished: {commitState.created} added, {commitState.updated} updated, {commitState.skipped} skipped.
         </p>
+        {commitState.keptPackSizes.length > 0 && (
+          <p className={`${ui.message} ${ui.error}`}>
+            {commitState.keptPackSizes.join(", ")} {commitState.keptPackSizes.length === 1 ? "has" : "have"} pack sizes, so
+            {commitState.keptPackSizes.length === 1 ? " its" : " their"} prices and stock were not changed. Edit the pack
+            sizes on the product page.
+          </p>
+        )}
         <div className={styles.actions}>
           <Link href="/admin/products" className={ui.button}>
             View products

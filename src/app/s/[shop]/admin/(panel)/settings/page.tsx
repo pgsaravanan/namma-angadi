@@ -1,5 +1,7 @@
 import styles from "@/components/admin/AdminShell.module.scss";
 import {
+  ComplianceForm,
+  OrderingForm,
   PaymentSettingsForm,
   ShopDetailsForm,
   StorefrontForm,
@@ -13,7 +15,8 @@ import { parsePaymentMethods } from "@/lib/payment-methods";
 import { enabledProviders, readStoredCredentials } from "@/lib/payments";
 import { isProviderId } from "@/lib/payments/catalog";
 import { razorpayMode } from "@/lib/payments/razorpay";
-import { savePaymentSettings, saveShopDetails, saveStorefront } from "./actions";
+import { saveCompliance, saveOrdering, savePaymentSettings, saveShopDetails, saveStorefront } from "./actions";
+import { paiseToRupees } from "@/lib/money";
 
 export default async function SettingsPage() {
   const { shop } = await requireShopPermission("settings:manage");
@@ -48,6 +51,24 @@ export default async function SettingsPage() {
           Store address: <a href={storeUrl}>{storeUrl}</a>
         </p>
         <ShopDetailsForm action={saveShopDetails} shop={shop} />
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={styles.cardTitle}>Ordering and delivery</h2>
+        <OrderingForm
+          action={saveOrdering}
+          shop={{
+            ...shop,
+            deliveryFee: shop.deliveryFeePaise ? paiseToRupees(shop.deliveryFeePaise) : "",
+            freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
+            minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
+          }}
+        />
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={styles.cardTitle}>Business and tax details</h2>
+        <ComplianceForm action={saveCompliance} shop={shop} />
       </section>
 
       <section className={ui.card}>

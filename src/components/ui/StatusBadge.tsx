@@ -1,9 +1,11 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
+import { statusLabel } from "@/lib/order-status";
 import styles from "./StatusBadge.module.scss";
 
 const TONES: Record<OrderStatus, string> = {
   PENDING: styles.warning,
   PAID: styles.success,
+  PREPARING: styles.info,
   SHIPPED: styles.info,
   DELIVERED: styles.success,
   FAILED: styles.danger,
@@ -12,17 +14,6 @@ const TONES: Record<OrderStatus, string> = {
   REFUNDED: styles.neutral,
 };
 
-const LABELS: Record<OrderStatus, string> = {
-  PENDING: "Awaiting payment",
-  PAID: "Paid",
-  SHIPPED: "Shipped",
-  DELIVERED: "Delivered",
-  FAILED: "Payment failed",
-  EXPIRED: "Expired",
-  CANCELLED: "Cancelled",
-  REFUNDED: "Refunded",
-};
-
-export function StatusBadge({ status }: { status: OrderStatus }) {
-  return <span className={`${styles.badge} ${TONES[status]}`}>{LABELS[status]}</span>;
+export function StatusBadge({ status, deliveryMethod }: { status: OrderStatus; deliveryMethod?: string }) {
+  return <span className={`${styles.badge} ${TONES[status]}`}>{statusLabel(status, deliveryMethod)}</span>;
 }

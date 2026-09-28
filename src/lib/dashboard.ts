@@ -13,7 +13,7 @@ export async function getDashboardStats(shopId: string) {
       _sum: { totalPaise: true },
       _count: true,
     }),
-    db.order.count({ where: { shopId, status: "PAID" } }),
+    db.order.count({ where: { shopId, status: { in: ["PAID", "PREPARING"] } } }),
     db.product.count({ where: { shopId, isActive: true, stock: { lte: LOW_STOCK } } }),
     db.order.count({ where: { shopId, attentionNote: { not: null } } }),
     db.order.findMany({ where: { shopId }, orderBy: { createdAt: "desc" }, take: 6 }),

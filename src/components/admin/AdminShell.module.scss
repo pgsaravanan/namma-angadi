@@ -190,3 +190,55 @@
     grid-template-columns: 1fr;
   }
 }
+
+.variantHead,
+.variantRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) 40px;
+  gap: 8px;
+  align-items: center;
+}
+
+.variantHead {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.moreOptions {
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+}
+
+.days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.policyText {
+  min-height: 220px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.emailSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.emailBody {
+  margin: 16px 0 0;
+  padding: 16px;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Category, Shop } from "@/generated/prisma/client";
 import { CartLink } from "./CartLink";
-import { MenuIcon, SearchIcon } from "./icons";
+import { MenuIcon, SearchIcon, UserIcon } from "./icons";
 import styles from "./StoreHeader.module.scss";
 
 const MAX_MENU_ITEMS = 5;
@@ -54,6 +54,9 @@ export function StoreHeader({ shop, categories }: Props) {
           <div className={styles.tools}>
             <Link href="/products" className={styles.iconLink} aria-label="Search products">
               <SearchIcon className={styles.icon} />
+            </Link>
+            <Link href="/account" className={styles.iconLink} aria-label="My account">
+              <UserIcon className={styles.icon} />
             </Link>
             <CartLink shopId={shop.id} />
           </div>

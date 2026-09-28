@@ -16,6 +16,7 @@ export const metadata = { title: "Your order", robots: { index: false } };
 
 const HEADLINES: Record<OrderStatus, string> = {
   PAID: "Your order is confirmed",
+  PREPARING: "We're preparing your order",
   SHIPPED: "Your order is on the way",
   DELIVERED: "Your order has been delivered",
   PENDING: "We're confirming your payment…",
@@ -26,7 +27,8 @@ const HEADLINES: Record<OrderStatus, string> = {
 };
 
 const NEXT_STEPS: Partial<Record<OrderStatus, string>> = {
-  PAID: "We're packing your order. We'll call you on your mobile number when it is sent.",
+  PAID: "We've received your order. We'll call you on your mobile number if we need anything.",
+  PREPARING: "Your food is being freshly prepared.",
   SHIPPED: "Your parcel has left the shop and will reach you soon.",
   PENDING: "This page updates by itself as soon as your bank confirms the payment.",
   REFUNDED: "The money is on its way back to you. Banks usually take 5 to 7 working days.",
@@ -48,7 +50,15 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
   const payment = order.payments.find((candidate) => candidate.status === "captured" || candidate.status === "refunded");
   const isSuccess = isPaidStatus(order.status);
   const firstName = order.customerName.split(" ")[0];
-  const nextStep = NEXT_STEPS[order.status];
+  const isPickup = order.deliveryMethod === "pickup";
+  const nextStep =
+    isPickup && order.status === "SHIPPED" ? "Your order is ready. Please collect it from the shop." : NEXT_STEPS[order.status];
+  const headline =
+    isPickup && order.status === "SHIPPED"
+      ? "Your order is ready for pickup"
+      : isPickup && order.status === "DELIVERED"
+        ? "You've picked up your order"
+        : HEADLINES[order.status];
 
   return (
     <div className={`${storeStyles.container} ${styles.wrap}`}>
@@ -63,13 +73,13 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
         <div>
           <h1 className={styles.headline}>
             {isSuccess ? `Thank you, ${firstName}! ` : ""}
-            {HEADLINES[order.status]}
+            {headline}
           </h1>
           <p className={ui.muted}>
             Order #{order.number} · placed {dateFormat.format(order.createdAt)}
           </p>
         </div>
-        <StatusBadge status={order.status} />
+        <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
       </section>
 
       {nextStep && <p className={styles.nextStep}>{nextStep}</p>}
@@ -97,6 +107,10 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
                 <span>− {formatPaise(order.discountPaise)}</span>
               </li>
             )}
+            <li className={ui.muted}>
+              <span>{isPickup ? "Pickup" : "Delivery"}</span>
+              <span>{order.deliveryFeePaise ? formatPaise(order.deliveryFeePaise) : "Free"}</span>
+            </li>
             <li className={styles.total}>
               <span>Total</span>
               <span>{formatPaise(order.totalPaise)}</span>
@@ -106,12 +120,12 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
 
         <div className={styles.side}>
           <section className={ui.card}>
-            <h2 className={styles.sectionTitle}>Delivering to</h2>
+            <h2 className={styles.sectionTitle}>{isPickup ? "Pickup from" : "Delivering to"}</h2>
             <p className={styles.block}>
-              <strong>{order.customerName}</strong>
-              {addressLines(order).map((line) => (
-                <span key={line}>{line}</span>
-              ))}
+              <strong>{isPickup ? shop.name : order.customerName}</strong>
+              {isPickup
+                ? shop.address && <span>{shop.address}</span>
+                : addressLines(order).map((line) => <span key={line}>{line}</span>)}
             </p>
             <p className={`${styles.block} ${ui.muted}`}>
               <span>Mobile: {order.customerPhone}</span>
@@ -136,8 +150,13 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
                 <dt>Transaction ID</dt>
                 <dd className={styles.reference}>{payment.providerPaymentId}</dd>
               </dl>
+            ) : null}
+            {order.invoiceNumber ? (
+              <Link href={`/bill/${order.accessToken}`} className={`${ui.button} ${ui.secondary} ${ui.small} ${styles.billLink}`}>
+                View bill
+              </Link>
             ) : (
-              <p className={ui.muted}>No payment received yet.</p>
+              !payment && <p className={ui.muted}>No payment received yet.</p>
             )}
           </section>
         </div>

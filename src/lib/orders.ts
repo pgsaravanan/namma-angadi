@@ -15,7 +15,8 @@ import {
   type WebhookEvent,
 } from "./payments";
 import { isProviderId, type ProviderId } from "./payments/catalog";
-import { cartLinesSchema, quoteCart } from "./pricing";
+import { notifyOrderPaid, notifyStatusChange } from "./notifications";
+import { cartLinesSchema, deliveryMethodSchema, quoteCart } from "./pricing";
 
 const PAYMENT_WINDOW_MINUTES = 30;
 const FIRST_ORDER_NUMBER = 1001;
@@ -33,13 +34,22 @@ export const checkoutSchema = z.object({
     phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
     email: z.union([z.email("Enter a valid email"), z.literal("")]).optional(),
   }),
-  address: z.object({
-    line1: z.string().trim().min(5, "Enter your house number and street").max(200),
-    line2: z.string().trim().max(200).optional(),
-    city: z.string().trim().min(2, "Enter your town or city").max(80),
-    state: z.enum(INDIAN_STATES, { error: "Choose your state" }),
-    pincode: z.string().trim().regex(PINCODE_PATTERN, "Enter a valid 6-digit PIN code"),
-  }),
+  deliveryMethod: deliveryMethodSchema.default("delivery"),
+  address: z
+    .object({
+      line1: z.string().trim().min(5, "Enter your house number and street").max(200),
+      line2: z.string().trim().max(200).optional(),
+      city: z.string().trim().min(2, "Enter your town or city").max(80),
+      state: z.enum(INDIAN_STATES, { error: "Choose your state" }),
+      pincode: z.string().trim().regex(PINCODE_PATTERN, "Enter a valid 6-digit PIN code"),
+    })
+    .optional(),
+  createAccount: z
+    .object({ password: z.string().min(8, "Choose a password of at least 8 characters").max(200) })
+    .optional(),
+}).refine((input) => input.deliveryMethod === "pickup" || input.address, {
+  message: "Enter your delivery address",
+  path: ["address"],
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
@@ -50,10 +60,27 @@ function requirePaymentConfig(shop: Shop) {
   return config;
 }
 
+type StockLine = { productId: string; variantId: string | null; quantity: number };
+
+async function takeStock(tx: Tx, line: StockLine) {
+  const where = { stock: { gte: line.quantity } };
+  const data = { stock: { decrement: line.quantity } };
+  const result = line.variantId
+    ? await tx.productVariant.updateMany({ where: { id: line.variantId, ...where }, data })
+    : await tx.product.updateMany({ where: { id: line.productId, ...where }, data });
+  return result.count > 0;
+}
+
+async function returnStock(tx: Tx, line: StockLine) {
+  const data = { stock: { increment: line.quantity } };
+  if (line.variantId) await tx.productVariant.updateMany({ where: { id: line.variantId }, data });
+  else await tx.product.update({ where: { id: line.productId }, data });
+}
+
 async function releaseStock(tx: Tx, orderId: string) {
   const items = await tx.orderItem.findMany({ where: { orderId, stockReserved: true } });
   for (const item of items) {
-    await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
+    await returnStock(tx, item);
     await tx.orderItem.update({ where: { id: item.id }, data: { stockReserved: false } });
   }
 }
@@ -62,12 +89,11 @@ async function reserveStock(tx: Tx, orderId: string) {
   const items = await tx.orderItem.findMany({ where: { orderId, stockReserved: false } });
   const shortages: string[] = [];
   for (const item of items) {
-    const reserved = await tx.product.updateMany({
-      where: { id: item.productId, stock: { gte: item.quantity } },
-      data: { stock: { decrement: item.quantity } },
-    });
-    if (reserved.count) await tx.orderItem.update({ where: { id: item.id }, data: { stockReserved: true } });
-    else shortages.push(item.name);
+    if (await takeStock(tx, item)) {
+      await tx.orderItem.update({ where: { id: item.id }, data: { stockReserved: true } });
+    } else {
+      shortages.push(item.name);
+    }
   }
   return shortages;
 }
@@ -106,21 +132,26 @@ function isUniqueViolation(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
-async function placeOrder(shop: Shop, input: CheckoutInput) {
+async function placeOrder(shop: Shop, input: CheckoutInput, customerAccountId: string | null) {
   for (let attempt = 1; ; attempt++) {
     try {
       return await db.$transaction(async (tx) => {
-        const quote = await quoteCart(shop.id, input.items, input.couponCode, tx);
+        const quote = await quoteCart(
+          shop,
+          {
+            items: input.items,
+            couponCode: input.couponCode,
+            deliveryMethod: input.deliveryMethod,
+            pincode: input.address?.pincode,
+          },
+          tx,
+        );
         if (quote.problems.length) throw new CheckoutError(quote.problems[0]);
         if (input.couponCode && quote.couponError) throw new CheckoutError(quote.couponError);
         if (quote.totalPaise < MIN_ORDER_PAISE) throw new CheckoutError("Order total is too low");
 
         for (const line of quote.lines) {
-          const reserved = await tx.product.updateMany({
-            where: { id: line.productId, shopId: shop.id, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity } },
-          });
-          if (!reserved.count) throw new CheckoutError(`${line.name} just went out of stock`);
+          if (!(await takeStock(tx, line))) throw new CheckoutError(`${line.name} just went out of stock`);
         }
 
         const { name, phone, email } = input.customer;
@@ -141,20 +172,27 @@ async function placeOrder(shop: Shop, input: CheckoutInput) {
             customerPhone: phone,
             customerEmail: email || null,
             couponId: quote.couponId,
+            customerAccountId,
+            deliveryMethod: quote.deliveryMethod,
+            deliveryFeePaise: quote.deliveryFeePaise,
             number: (last._max.number ?? FIRST_ORDER_NUMBER - 1) + 1,
             accessToken: randomToken(24),
             subtotalPaise: quote.subtotalPaise,
             discountPaise: quote.discountPaise,
             totalPaise: quote.totalPaise,
-            addressLine1: address.line1,
-            addressLine2: address.line2 || null,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
+            addressLine1: address?.line1 ?? "Pickup from the shop",
+            addressLine2: address?.line2 || null,
+            city: address?.city ?? "",
+            state: address?.state ?? "",
+            pincode: address?.pincode ?? "",
             expiresAt: new Date(Date.now() + PAYMENT_WINDOW_MINUTES * 60 * 1000),
             items: {
               create: quote.lines.map((line) => ({
                 productId: line.productId,
+                variantId: line.variantId,
+                variantLabel: line.variantLabel,
+                gstRate: line.gstRate,
+                hsnCode: line.hsnCode,
                 name: line.name,
                 unitPricePaise: line.unitPricePaise,
                 quantity: line.quantity,
@@ -170,14 +208,19 @@ async function placeOrder(shop: Shop, input: CheckoutInput) {
   }
 }
 
-export async function createCheckout(shop: Shop, input: CheckoutInput, origin: string) {
+export async function createCheckout(
+  shop: Shop,
+  input: CheckoutInput,
+  origin: string,
+  customerAccountId: string | null = null,
+) {
   if (shop.status !== "ACTIVE") throw new CheckoutError("This shop is not accepting orders right now");
   const config = requirePaymentConfig(shop);
   const provider = getProvider(config.provider);
 
   await releaseExpiredOrders(shop.id, { force: true });
   await releaseEarlierAttempts(shop.id, input.customer.phone);
-  const order = await placeOrder(shop, input);
+  const order = await placeOrder(shop, input, customerAccountId);
 
   try {
     const providerOrder = await provider.createOrder(config, {
@@ -207,7 +250,19 @@ export async function createCheckout(shop: Shop, input: CheckoutInput, origin: s
 }
 
 export async function markOrderPaid(shopId: string, provider: ProviderId, payment: ProviderPayment) {
-  return db.$transaction(async (tx) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await recordPayment(shopId, provider, payment);
+    } catch (error) {
+      if (isUniqueViolation(error) && attempt < ORDER_NUMBER_ATTEMPTS) continue;
+      throw error;
+    }
+  }
+}
+
+async function recordPayment(shopId: string, provider: ProviderId, payment: ProviderPayment) {
+  let justPaid = false;
+  const order = await db.$transaction(async (tx) => {
     const order = await tx.order.findFirst({ where: { shopId, provider, providerOrderId: payment.providerOrderId } });
     if (!order) return null;
 
@@ -231,11 +286,19 @@ export async function markOrderPaid(shopId: string, provider: ProviderId, paymen
 
     if (isPaidStatus(order.status) || order.status === "REFUNDED") return order;
 
+    const shop = await tx.shop.findUniqueOrThrow({ where: { id: shopId }, select: { gstin: true } });
+    const lastInvoice = await tx.order.aggregate({ where: { shopId }, _max: { invoiceNumber: true } });
     const moved = await tx.order.updateMany({
       where: { id: order.id, status: order.status },
-      data: { status: "PAID", paidAt: new Date() },
+      data: {
+        status: "PAID",
+        paidAt: new Date(),
+        invoiceNumber: (lastInvoice._max.invoiceNumber ?? 0) + 1,
+        sellerGstin: shop.gstin,
+      },
     });
     if (!moved.count) return order;
+    justPaid = true;
 
     if (order.status !== "PENDING") {
       const shortages = await reserveStock(tx, order.id);
@@ -255,6 +318,9 @@ export async function markOrderPaid(shopId: string, provider: ProviderId, paymen
 
     return order;
   });
+
+  if (order && justPaid) notifyOrderPaid(order.id);
+  return order;
 }
 
 export async function confirmClientPayment(shop: Shop, providerInput: string, payload: Record<string, string>) {
@@ -302,7 +368,8 @@ export async function handleWebhookEvent(config: PaymentConfig, event: WebhookEv
 }
 
 const MANUAL_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
-  PAID: ["SHIPPED"],
+  PAID: ["PREPARING", "SHIPPED"],
+  PREPARING: ["SHIPPED"],
   SHIPPED: ["DELIVERED"],
 };
 
@@ -314,6 +381,7 @@ export async function advanceOrderStatus(shopId: string, orderId: string, status
   const order = await db.order.findFirst({ where: { id: orderId, shopId } });
   if (!order || !nextStatuses(order.status).includes(status)) throw new Error("This status change is not allowed");
   await db.order.update({ where: { id: order.id }, data: { status } });
+  notifyStatusChange(order.id, status);
 }
 
 export async function cancelPendingOrder(shopId: string, orderId: string) {

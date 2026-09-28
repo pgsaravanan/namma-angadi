@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import styles from "@/components/admin/AdminShell.module.scss";
 import { OrderActions } from "@/components/admin/OrderActions";
@@ -35,7 +36,7 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
           <h1 className={styles.pageTitle}>Order #{order.number}</h1>
           <p className={ui.muted}>Placed {dateFormat.format(order.createdAt)}</p>
         </div>
-        <StatusBadge status={order.status} />
+        <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
       </div>
 
       {order.attentionNote && (
@@ -46,6 +47,7 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
 
       <OrderActions
         nextStatuses={nextStatuses(order.status)}
+        deliveryMethod={order.deliveryMethod}
         updateStatus={updateOrderStatus.bind(null, order.id)}
         cancel={order.status === "PENDING" ? cancelOrder.bind(null, order.id) : undefined}
         refund={refundable ? refundFullOrder.bind(null, order.id) : undefined}
@@ -84,6 +86,10 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
                 </tr>
               )}
               <tr>
+                <td colSpan={3}>{order.deliveryMethod === "pickup" ? "Pickup" : "Delivery"}</td>
+                <td>{order.deliveryFeePaise ? formatPaise(order.deliveryFeePaise) : "Free"}</td>
+              </tr>
+              <tr>
                 <th colSpan={3}>Total</th>
                 <th>{formatPaise(order.totalPaise)}</th>
               </tr>
@@ -106,15 +112,24 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
               </>
             )}
           </p>
-          <h2 className={styles.cardTitle}>Delivery address</h2>
-          <p className={ui.muted}>
-            {addressLines(order).map((line) => (
-              <span key={line}>
-                {line}
-                <br />
-              </span>
-            ))}
-          </p>
+          <h2 className={styles.cardTitle}>{order.deliveryMethod === "pickup" ? "Pickup" : "Delivery address"}</h2>
+          {order.deliveryMethod === "pickup" ? (
+            <p className={ui.muted}>Customer will collect from the shop.</p>
+          ) : (
+            <p className={ui.muted}>
+              {addressLines(order).map((line) => (
+                <span key={line}>
+                  {line}
+                  <br />
+                </span>
+              ))}
+            </p>
+          )}
+          {order.invoiceNumber && (
+            <Link href={`/admin/invoice/${order.id}`} className={`${ui.button} ${ui.secondary} ${ui.small}`}>
+              Print bill
+            </Link>
+          )}
         </section>
 
         <section className={ui.card}>

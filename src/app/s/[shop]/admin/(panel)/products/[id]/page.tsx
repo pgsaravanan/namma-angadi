@@ -11,7 +11,10 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
   const { id } = await params;
   const { shop } = await requireShopPermission("products:manage");
   const [product, categories] = await Promise.all([
-    db.product.findFirst({ where: { id, shopId: shop.id } }),
+    db.product.findFirst({
+      where: { id, shopId: shop.id },
+      include: { variants: { orderBy: { position: "asc" } } },
+    }),
     listCategories(shop.id),
   ]);
   if (!product) notFound();
@@ -22,7 +25,17 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
       <ProductForm
         action={saveProduct.bind(null, product.id)}
         categories={categories}
-        product={{ ...product, price: paiseToRupees(product.pricePaise) }}
+        defaultGstRate={shop.defaultGstRate}
+        product={{
+          ...product,
+          price: paiseToRupees(product.pricePaise),
+          variants: product.variants.map((variant) => ({
+            id: variant.id,
+            label: variant.label,
+            price: paiseToRupees(variant.pricePaise),
+            stock: String(variant.stock),
+          })),
+        }}
       />
     </div>
   );

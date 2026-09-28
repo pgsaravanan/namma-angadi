@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 
-export type CartLine = { productId: string; quantity: number };
+export type CartLine = { productId: string; variantId?: string | null; quantity: number };
 
 export const MAX_QUANTITY = 20;
 
@@ -17,7 +17,10 @@ function parse(raw: string | null): CartLine[] {
     if (!Array.isArray(value)) return EMPTY;
     return value.filter(
       (line): line is CartLine =>
-        typeof line?.productId === "string" && Number.isInteger(line?.quantity) && line.quantity > 0,
+        typeof line?.productId === "string" &&
+        (line.variantId === undefined || line.variantId === null || typeof line.variantId === "string") &&
+        Number.isInteger(line?.quantity) &&
+        line.quantity > 0,
     );
   } catch {
     return EMPTY;
@@ -61,12 +64,13 @@ export function useCart(shopId: string) {
   );
 
   const setQuantity = useCallback(
-    (productId: string, quantity: number) => {
+    (productId: string, variantId: string | null, quantity: number) => {
       const current = read(key);
       const clamped = Math.min(Math.max(0, quantity), MAX_QUANTITY);
-      const next = current.some((line) => line.productId === productId)
-        ? current.map((line) => (line.productId === productId ? { ...line, quantity: clamped } : line))
-        : [...current, { productId, quantity: clamped }];
+      const matches = (line: CartLine) => line.productId === productId && (line.variantId ?? null) === variantId;
+      const next = current.some(matches)
+        ? current.map((line) => (matches(line) ? { ...line, quantity: clamped } : line))
+        : [...current, { productId, variantId, quantity: clamped }];
       write(
         key,
         next.filter((line) => line.quantity > 0),
@@ -76,9 +80,9 @@ export function useCart(shopId: string) {
   );
 
   const add = useCallback(
-    (productId: string, quantity = 1) => {
-      const existing = read(key).find((line) => line.productId === productId);
-      setQuantity(productId, (existing?.quantity ?? 0) + quantity);
+    (productId: string, quantity = 1, variantId: string | null = null) => {
+      const existing = read(key).find((line) => line.productId === productId && (line.variantId ?? null) === variantId);
+      setQuantity(productId, variantId, (existing?.quantity ?? 0) + quantity);
     },
     [key, setQuantity],
   );

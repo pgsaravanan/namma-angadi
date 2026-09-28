@@ -1,0 +1,41 @@
+.mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  background: #fff;
+  vertical-align: middle;
+}
+
+.symbol {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.veg {
+  color: #1e8a3b;
+}
+
+.egg {
+  color: #d99a1e;
+}
+
+.nonveg {
+  color: #8b3a1a;
+
+  .symbol {
+    width: 0;
+    height: 0;
+    border-radius: 0;
+    background: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid currentColor;
+  }
+}

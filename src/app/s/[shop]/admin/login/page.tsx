@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import styles from "@/components/ui/AuthCard.module.scss";
 import { LoginForm } from "@/components/ui/LoginForm";
@@ -8,7 +9,8 @@ import { loginToShop } from "../actions";
 
 export const metadata = { title: "Shop admin sign in" };
 
-export default async function ShopLoginPage() {
+export default async function ShopLoginPage({ searchParams }: PageProps<"/s/[shop]/admin/login">) {
+  const { reset } = await searchParams;
   const shop = await requireShop();
   if (await getShopStaff(shop.id)) redirect("/admin");
 
@@ -19,7 +21,9 @@ export default async function ShopLoginPage() {
           <p className={styles.eyebrow}>{shop.name}</p>
           <h1 className={styles.title}>Shop admin</h1>
         </div>
+        {reset === "1" && <p className={`${ui.message} ${ui.success}`}>Password changed. Please sign in.</p>}
         <LoginForm action={loginToShop} />
+        <Link href="/admin/forgot">Forgot password?</Link>
       </div>
     </main>
   );

@@ -1,0 +1,50 @@
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: var(--radius-md);
+  background: var(--color-success);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  animation: rise 0.25s ease-out;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  span {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+}
+
+.open {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-success);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.close {
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}

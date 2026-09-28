@@ -38,6 +38,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
     await db.product.findMany({
       where: { shopId: shop.id, isActive: true, ...(category && { categoryId: category.id }) },
       orderBy: sort.orderBy,
+      include: { variants: { select: { pricePaise: true, stock: true } } },
     })
   ).filter(
     (product) =>

@@ -81,7 +81,7 @@ export default async function DashboardPage() {
                     <td>{order.customerName}</td>
                     <td>{formatPaise(order.totalPaise)}</td>
                     <td>
-                      <StatusBadge status={order.status} />
+                      <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
                     </td>
                   </tr>
                 ))}
