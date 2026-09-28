@@ -162,6 +162,7 @@ type StorefrontProps = {
   action: Action;
   shop: {
     logoUrl: string | null;
+    iconUrl: string | null;
     heroImageUrl: string | null;
     heroTitle: string | null;
     heroSubtitle: string | null;
@@ -178,6 +179,7 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
     <form action={formAction} className={ui.form}>
       <div className={ui.row}>
         <ImageInput name="logo" label="Logo" currentUrl={shop.logoUrl} />
+        <ImageInput name="icon" label="Browser tab icon (square)" currentUrl={shop.iconUrl} />
         <ImageInput name="hero" label="Banner photo (wide)" currentUrl={shop.heroImageUrl} shape="wide" />
       </div>
       <label className={ui.field}>

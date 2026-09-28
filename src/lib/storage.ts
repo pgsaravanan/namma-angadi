@@ -6,13 +6,13 @@ import { randomToken } from "./crypto";
 
 const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 const MEDIA_PREFIX = "/media/";
-const KEY_PATTERN = /^shops\/[a-z0-9]+\/(products|categories|branding)\/[A-Za-z0-9_-]+$/;
+const KEY_PATTERN = /^shops\/[a-z0-9]+\/(products|categories|branding|icons)\/[A-Za-z0-9_-]+$/;
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-export type ImageKind = "products" | "categories" | "branding";
+export type ImageKind = "products" | "categories" | "branding" | "icons";
 
-const MAX_EDGE: Record<ImageKind, number> = { products: 1200, categories: 1200, branding: 2000 };
+const MAX_EDGE: Record<ImageKind, number> = { products: 1200, categories: 1200, branding: 2000, icons: 512 };
 
 export class ImageUploadError extends Error {}
 

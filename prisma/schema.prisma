@@ -62,6 +62,7 @@ model Shop {
   notifyEmail            String?
   senderEmail            String?
   logoUrl                String?
+  iconUrl                String?
   heroImageUrl           String?
   heroTitle              String?
   heroSubtitle           String?

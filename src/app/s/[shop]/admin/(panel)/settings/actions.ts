@@ -116,8 +116,10 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
 
   let logoUrl: string | null;
   let heroImageUrl: string | null;
+  let iconUrl: string | null;
   try {
     logoUrl = await resolveImageField(shop.id, formData, { current: shop.logoUrl, field: "logo", kind: "branding" });
+    iconUrl = await resolveImageField(shop.id, formData, { current: shop.iconUrl, field: "icon", kind: "icons" });
     heroImageUrl = await resolveImageField(shop.id, formData, {
       current: shop.heroImageUrl,
       field: "hero",
@@ -129,9 +131,10 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
   }
 
   const text = Object.fromEntries(Object.entries(parsed.data).map(([key, value]) => [key, value || null]));
-  await db.shop.update({ where: { id: shop.id }, data: { ...text, logoUrl, heroImageUrl } });
+  await db.shop.update({ where: { id: shop.id }, data: { ...text, logoUrl, heroImageUrl, iconUrl } });
   if (shop.logoUrl !== logoUrl) await deleteStoredImage(shop.logoUrl);
   if (shop.heroImageUrl !== heroImageUrl) await deleteStoredImage(shop.heroImageUrl);
+  if (shop.iconUrl !== iconUrl) await deleteStoredImage(shop.iconUrl);
 
   revalidatePath("/", "layout");
   return { success: "Storefront saved. Open your store to see it." };
