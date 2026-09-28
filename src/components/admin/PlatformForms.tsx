@@ -33,11 +33,8 @@ export function CreateShopForm({ action, rootDomain }: { action: Action; rootDom
           <span className={ui.label}>Owner email</span>
           <input className={ui.input} name="ownerEmail" type="email" required autoComplete="off" />
         </label>
-        <label className={ui.field}>
-          <span className={ui.label}>Temporary password</span>
-          <input className={ui.input} name="ownerPassword" type="password" required minLength={10} autoComplete="new-password" />
-        </label>
       </div>
+      <p className={ui.hint}>The owner gets an email invite to choose their own password.</p>
       <FormMessage state={state} />
       <div>
         <SubmitButton>Create shop</SubmitButton>

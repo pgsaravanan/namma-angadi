@@ -168,3 +168,18 @@ textarea.input {
   text-align: center;
   color: var(--color-text-muted);
 }
+
+.flush {
+  margin: 0;
+}
+
+.copyLink {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+
+  input {
+    min-height: 32px;
+    font-size: 13px;
+  }
+}

@@ -1,10 +1,10 @@
 import "server-only";
 import { db } from "./db";
 
-const SECRET_LINK = /\/reset\/[A-Za-z0-9_-]+/g;
+const SECRET_LINK = /\/(reset|welcome)\/[A-Za-z0-9_-]+/g;
 
 function forLog(text: string) {
-  return text.replace(SECRET_LINK, "/reset/[link hidden]");
+  return text.replace(SECRET_LINK, "/$1/[link hidden]");
 }
 
 type EmailInput = { shopId: string | null; to: string; subject: string; text: string; replyTo?: string | null };

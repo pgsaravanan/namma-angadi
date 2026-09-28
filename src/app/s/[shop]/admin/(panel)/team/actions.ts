@@ -5,35 +5,45 @@ import { z } from "zod";
 import type { FormState } from "@/components/ui/FormMessage";
 import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { hashPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { inviteToShop, resendInvite } from "@/lib/invites";
 
 const memberSchema = z.object({
   name: z.string().trim().min(2, "Enter a name").max(80),
   email: z.email("Enter a valid email").trim().toLowerCase(),
-  password: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
   role: z.enum(["SUPER_ADMIN", "ADMIN"]),
 });
 
 export async function addMember(_: FormState, formData: FormData): Promise<FormState> {
-  const { shop } = await requireShopPermission("team:manage");
+  const { shop, staff } = await requireShopPermission("team:manage");
   const parsed = memberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const { name, email, password, role } = parsed.data;
-  let user = await db.user.findUnique({ where: { email } });
-  const isNewUser = !user;
-  user ??= await db.user.create({ data: { name, email, passwordHash: await hashPassword(password) } });
-
-  const existing = await db.membership.findUnique({ where: { shopId_userId: { shopId: shop.id, userId: user.id } } });
-  if (existing) return { error: `${email} is already in your team` };
-
-  await db.membership.create({ data: { shopId: shop.id, userId: user.id, role } });
+  const result = await inviteToShop({
+    shop,
+    ...parsed.data,
+    invitedBy: staff.user.name,
+    byPlatformAdmin: staff.user.isPlatformAdmin,
+  });
   revalidatePath("/admin/team");
+
+  if (result.status === "already-member") return { error: `${parsed.data.email} is already in your team` };
+  if (result.status === "added") {
+    return { success: `${parsed.data.email} already had a login, so they can sign in now with their usual password.` };
+  }
+  if (!result.link) return { success: `Invite emailed to ${parsed.data.email}. The link works for 7 days.` };
   return {
-    success: isNewUser
-      ? `${name} can now sign in with the password you set. Ask them to keep it private.`
-      : `${email} already had an account, so they can sign in with their existing password.`,
+    success: `Invite sent to ${parsed.data.email}. If it doesn't arrive, send them this link yourself (it works for 7 days):`,
+    link: result.link,
   };
+}
+
+export async function newInviteLink(userId: string): Promise<FormState> {
+  const { shop, staff } = await requireShopPermission("team:manage");
+  const result = await resendInvite(shop, userId, staff.user.name, staff.user.isPlatformAdmin);
+  if (!result) return { error: "This person has already set their password" };
+  return result.link
+    ? { success: "New invite link (the old one no longer works):", link: result.link }
+    : { success: "We've emailed them a new invite link." };
 }
 
 export async function removeMember(membershipId: string) {

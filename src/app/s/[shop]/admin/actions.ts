@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { authenticate } from "@/lib/login";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { consumeResetToken, createResetToken } from "@/lib/password-reset";
+import { consumeResetToken, createResetToken, findValidResetToken } from "@/lib/password-reset";
 import { clientIpFrom, isRateLimited, originFromHeaders } from "@/lib/request";
 import { requireShop } from "@/lib/tenant";
 
@@ -78,7 +78,25 @@ export async function requestStaffReset(_: FormState, formData: FormData): Promi
 export async function resetStaffPassword(token: string, _: FormState, formData: FormData): Promise<FormState> {
   const password = String(formData.get("password") ?? "");
   if (password.length < MIN_STAFF_PASSWORD) return { error: `Use at least ${MIN_STAFF_PASSWORD} characters` };
-  const record = await consumeResetToken(token, password);
+  const record = await consumeResetToken(token, password, "reset");
   if (!record?.userId) return { error: "This link has expired. Please ask for a new one." };
   redirect("/admin/login?reset=1");
+}
+
+export async function acceptInvite(token: string, _: FormState, formData: FormData): Promise<FormState> {
+  const shop = await requireShop();
+  const password = String(formData.get("password") ?? "");
+  if (password.length < MIN_STAFF_PASSWORD) return { error: `Use at least ${MIN_STAFF_PASSWORD} characters` };
+  if (password !== formData.get("confirm")) return { error: "The passwords don't match" };
+
+  const invite = await findValidResetToken(token, "invite");
+  if (!invite?.userId) return { error: "This invite has expired. Ask for a new invite link." };
+  const member = await db.membership.findUnique({ where: { shopId_userId: { shopId: shop.id, userId: invite.userId } } });
+  if (!member) return { error: "This invite is for a different shop. Open the link exactly as it was sent to you." };
+
+  const record = await consumeResetToken(token, password, "invite");
+  if (!record?.userId) return { error: "This invite has expired. Ask for a new invite link." };
+
+  await createSession(record.userId, shop.id);
+  redirect("/admin?welcome=1");
 }

@@ -7,40 +7,50 @@ import { requirePlatformAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { isValidSlug } from "@/lib/host";
-import { hashPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { inviteToShop, resendInvite } from "@/lib/invites";
 
 const shopSchema = z.object({
   name: z.string().trim().min(2, "Enter the shop name").max(80),
   slug: z.string().trim().toLowerCase().refine(isValidSlug, "Use 3 to 40 lowercase letters, numbers or hyphens"),
   ownerName: z.string().trim().min(2, "Enter the owner's name").max(80),
   ownerEmail: z.email("Enter a valid owner email").trim().toLowerCase(),
-  ownerPassword: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
 });
 
 export async function createShop(_: FormState, formData: FormData): Promise<FormState> {
-  await requirePlatformAdmin();
+  const admin = await requirePlatformAdmin();
   const parsed = shopSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const { name, slug, ownerName, ownerEmail, ownerPassword } = parsed.data;
+  const { name, slug, ownerName, ownerEmail } = parsed.data;
   if (await db.shop.findUnique({ where: { slug } })) return { error: `The address ${slug} is already taken` };
 
-  const existingOwner = await db.user.findUnique({ where: { email: ownerEmail } });
-  const passwordHash = existingOwner ? null : await hashPassword(ownerPassword);
-
-  await db.$transaction(async (tx) => {
-    const owner =
-      existingOwner ?? (await tx.user.create({ data: { name: ownerName, email: ownerEmail, passwordHash: passwordHash! } }));
-    const shop = await tx.shop.create({ data: { name, slug } });
-    await tx.membership.create({ data: { shopId: shop.id, userId: owner.id, role: "SUPER_ADMIN" } });
+  const shop = await db.shop.create({ data: { name, slug } });
+  const result = await inviteToShop({
+    shop,
+    name: ownerName,
+    email: ownerEmail,
+    role: "SUPER_ADMIN",
+    invitedBy: admin.name,
+    byPlatformAdmin: true,
   });
 
   revalidatePath("/platform");
-  return {
-    success: existingOwner
-      ? `${name} created. ${ownerEmail} already had an account and is now the super admin.`
-      : `${name} created. The owner can sign in at the shop's /admin page.`,
-  };
+  if (result.status === "invited") {
+    return {
+      success: `${name} created. We've emailed ${ownerEmail} an invite. You can also send them this link (valid 7 days):`,
+      link: result.link ?? undefined,
+    };
+  }
+  return { success: `${name} created. ${ownerEmail} already had a login and is now the super admin.` };
+}
+
+export async function newOwnerInvite(shopId: string, userId: string): Promise<FormState> {
+  const admin = await requirePlatformAdmin();
+  const shop = await db.shop.findUnique({ where: { id: shopId } });
+  const result = shop && (await resendInvite(shop, userId, admin.name, true));
+  return result?.link
+    ? { success: "New invite link (the old one no longer works):", link: result.link }
+    : { error: "This owner has already set their password" };
 }
 
 export async function toggleShopStatus(shopId: string) {

@@ -1,10 +1,10 @@
 import styles from "@/components/admin/AdminShell.module.scss";
-import { MemberForm } from "@/components/admin/MemberForm";
+import { MemberForm, NewInviteButton } from "@/components/admin/MemberForm";
 import ui from "@/components/ui/ui.module.scss";
 import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { addMember, removeMember } from "./actions";
+import { addMember, newInviteLink, removeMember } from "./actions";
 
 export default async function TeamPage() {
   const { shop, staff } = await requireShopPermission("team:manage");
@@ -27,6 +27,7 @@ export default async function TeamPage() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Login</th>
                 <th />
               </tr>
             </thead>
@@ -36,6 +37,16 @@ export default async function TeamPage() {
                   <td>{member.user.name}</td>
                   <td>{member.user.email}</td>
                   <td>{ROLE_LABELS[member.role]}</td>
+                  <td>
+                    {member.user.passwordSetAt ? (
+                      <span className={ui.muted}>Active</span>
+                    ) : (
+                      <>
+                        <span className={ui.hint}>Invite pending</span>
+                        <NewInviteButton action={newInviteLink.bind(null, member.userId)} />
+                      </>
+                    )}
+                  </td>
                   <td>
                     {member.userId !== staff.user.id && (
                       <form action={removeMember.bind(null, member.id)}>
@@ -53,7 +64,7 @@ export default async function TeamPage() {
       </section>
 
       <section className={ui.card}>
-        <h2 className={styles.cardTitle}>Add a team member</h2>
+        <h2 className={styles.cardTitle}>Invite a team member</h2>
         <MemberForm action={addMember} />
       </section>
     </div>

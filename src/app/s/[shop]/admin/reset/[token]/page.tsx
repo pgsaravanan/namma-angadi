@@ -9,7 +9,7 @@ export const metadata = { title: "Choose a new password", robots: { index: false
 
 export default async function StaffResetPage({ params }: PageProps<"/s/[shop]/admin/reset/[token]">) {
   const { token } = await params;
-  const valid = await findValidResetToken(token);
+  const valid = await findValidResetToken(token, "reset");
 
   return (
     <main className={styles.page}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "@/components/admin/AdminShell.module.scss";
+import { NewInviteButton } from "@/components/admin/MemberForm";
 import { CreateShopForm, CustomDomainForm } from "@/components/admin/PlatformForms";
 import ui from "@/components/ui/ui.module.scss";
 import { requirePlatformAdmin } from "@/lib/auth";
@@ -9,7 +10,7 @@ import { shopBaseUrl } from "@/lib/host";
 import { PAID_STATUSES } from "@/lib/order-status";
 import { PROVIDERS, isProviderId } from "@/lib/payments/catalog";
 import { logoutFromPlatform } from "../login/actions";
-import { createShop, setCustomDomain, toggleShopStatus } from "./actions";
+import { createShop, newOwnerInvite, setCustomDomain, toggleShopStatus } from "./actions";
 
 export const metadata = { title: "Platform · Namma Angadi", robots: { index: false } };
 
@@ -61,7 +62,7 @@ export default async function PlatformPage() {
               </thead>
               <tbody>
                 {shops.map((shop) => {
-                  const url = shopBaseUrl(shop.slug, env.rootDomain);
+                  const url = shopBaseUrl(shop.slug, env.rootDomain, shop.customDomain);
                   return (
                     <tr key={shop.id}>
                       <td>
@@ -73,7 +74,15 @@ export default async function PlatformPage() {
                           · <a href={`${url}/admin`}>admin</a>
                         </div>
                       </td>
-                      <td>{shop.members[0]?.user.email ?? "—"}</td>
+                      <td>
+                        {shop.members[0]?.user.email ?? "—"}
+                        {shop.members[0] && !shop.members[0].user.passwordSetAt && (
+                          <>
+                            <div className={ui.hint}>Invite pending</div>
+                            <NewInviteButton action={newOwnerInvite.bind(null, shop.id, shop.members[0].userId)} />
+                          </>
+                        )}
+                      </td>
                       <td>{isProviderId(shop.paymentProvider) ? PROVIDERS[shop.paymentProvider].label : "Not set up"}</td>
                       <td>{shop._count.orders}</td>
                       <td>

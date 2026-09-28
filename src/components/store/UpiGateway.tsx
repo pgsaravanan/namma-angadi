@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ui from "@/components/ui/ui.module.scss";
 import { formatPaise } from "@/lib/money";
@@ -31,6 +32,7 @@ function formatCountdown(ms: number) {
 }
 
 export function UpiGateway({ orderId, shopName, orderNumber, amountPaise, vpa, appPath, qrDataUrl, expiresAt }: Props) {
+  const router = useRouter();
   const [waiting, setWaiting] = useState<string | null>(null);
   const [customerVpa, setCustomerVpa] = useState("");
   const [vpaError, setVpaError] = useState<string | null>(null);
@@ -66,8 +68,7 @@ export function UpiGateway({ orderId, shopName, orderNumber, amountPaise, vpa, a
   }, [expiresAt]);
 
   function openApp(name: string) {
-    window.open(`${appPath}?from=${encodeURIComponent(name)}`, "_blank", "noopener");
-    setWaiting(`Approve the payment in ${name}`);
+    router.push(`${appPath}?from=${encodeURIComponent(name)}`);
   }
 
   function sendCollectRequest(event: React.FormEvent) {
@@ -171,7 +172,7 @@ export function UpiGateway({ orderId, shopName, orderNumber, amountPaise, vpa, a
         </p>
         <p className={styles.countdown}>Request expires in {remaining !== null ? formatCountdown(remaining) : "…"}</p>
         <div className={styles.row}>
-          <a href={appPath} target="_blank" rel="noopener" className={ui.button}>
+          <a href={appPath} className={ui.button}>
             Open the Test UPI app
           </a>
           <Link href="/cart?payment=cancelled" className={`${ui.button} ${ui.secondary}`}>

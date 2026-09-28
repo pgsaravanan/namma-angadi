@@ -122,7 +122,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
 export async function resetPassword(token: string, _: FormState, formData: FormData): Promise<FormState> {
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) return { error: "Choose a password of at least 8 characters" };
-  const record = await consumeResetToken(token, password);
+  const record = await consumeResetToken(token, password, "reset");
   if (!record?.customerAccountId) return { error: "This link has expired. Please ask for a new one." };
   await createCustomerSession(record.customerAccountId);
   redirect("/account");

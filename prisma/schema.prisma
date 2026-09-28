@@ -85,12 +85,13 @@ model Shop {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
+  id              String    @id @default(cuid())
+  email           String    @unique
   name            String
   passwordHash    String
-  isPlatformAdmin Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  isPlatformAdmin Boolean   @default(false)
+  passwordSetAt   DateTime?
+  createdAt       DateTime  @default(now())
 
   memberships Membership[]
   sessions    Session[]
@@ -356,6 +357,7 @@ model CustomerSession {
 
 model PasswordResetToken {
   id                String    @id
+  purpose           String    @default("reset")
   userId            String?
   customerAccountId String?
   expiresAt         DateTime
