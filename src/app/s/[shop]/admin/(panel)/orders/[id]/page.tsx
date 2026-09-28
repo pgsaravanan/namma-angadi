@@ -12,8 +12,8 @@ import { nextStatuses } from "@/lib/orders";
 import { isPaidStatus } from "@/lib/order-status";
 import { can } from "@/lib/permissions";
 import { cancelOrder, refundFullOrder, updateOrderStatus } from "../actions";
+import { indiaDateTime } from "@/lib/dates";
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/admin/orders/[id]">) {
   const { id } = await params;
@@ -34,7 +34,7 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Order #{order.number}</h1>
-          <p className={ui.muted}>Placed {dateFormat.format(order.createdAt)}</p>
+          <p className={ui.muted}>Placed {indiaDateTime.format(order.createdAt)}</p>
         </div>
         <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
       </div>

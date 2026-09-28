@@ -4,10 +4,10 @@ import { buildInvoice } from "@/lib/invoice";
 import { formatPaise } from "@/lib/money";
 import styles from "./Invoice.module.scss";
 import { PrintButton } from "./PrintButton";
+import { indiaDate } from "@/lib/dates";
 
 type Props = { order: Order & { items: OrderItem[] }; shop: Shop; backHref: string };
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" });
 
 export function InvoiceDocument({ order, shop, backHref }: Props) {
   const invoice = buildInvoice(order, shop);
@@ -41,7 +41,7 @@ export function InvoiceDocument({ order, shop, backHref }: Props) {
               <dt>Invoice no.</dt>
               <dd>{invoice.number ?? "—"}</dd>
               <dt>Date</dt>
-              <dd>{order.paidAt ? dateFormat.format(order.paidAt) : "—"}</dd>
+              <dd>{order.paidAt ? indiaDate.format(order.paidAt) : "—"}</dd>
               <dt>Order no.</dt>
               <dd>#{order.number}</dd>
               {taxColumns && (

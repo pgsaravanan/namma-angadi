@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { after } from "next/server";
 import { Prisma, type SimulatedPayment } from "@/generated/prisma/client";
 import { isValidHmac, randomToken } from "../crypto";
+import { indiaTime } from "../dates";
 import { db } from "../db";
 import { env } from "../env";
 import { PaymentProviderError, type PaymentConfig, type PaymentProvider, type WebhookEvent } from "./types";
@@ -91,7 +92,7 @@ async function deliverWebhook(config: PaymentConfig, origin: string, simulatedPa
   }
 
   const current = await db.simulatedPayment.findUnique({ where: { id: simulatedPaymentId } });
-  const line = `${new Date().toLocaleTimeString("en-IN")} · ${event.type} → ${outcome}`;
+  const line = `${indiaTime.format(new Date())} · ${event.type} → ${outcome}`;
   await db.simulatedPayment.update({
     where: { id: simulatedPaymentId },
     data: { webhookLog: current?.webhookLog ? `${current.webhookLog}\n${line}` : line },

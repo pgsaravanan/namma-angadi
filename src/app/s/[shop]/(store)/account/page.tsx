@@ -10,10 +10,10 @@ import { isPaidStatus } from "@/lib/order-status";
 import { requireShop } from "@/lib/tenant";
 import styles from "../store.module.scss";
 import { signOut, updateProfile } from "./actions";
+import { indiaDate } from "@/lib/dates";
 
 export const metadata = { title: "My account", robots: { index: false } };
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" });
 
 export default async function AccountPage() {
   const shop = await requireShop();
@@ -52,7 +52,7 @@ export default async function AccountPage() {
                     <strong>Order #{order.number}</strong>
                   </Link>
                   <div className={ui.hint}>
-                    {dateFormat.format(order.createdAt)} ·{" "}
+                    {indiaDate.format(order.createdAt)} ·{" "}
                     {order.items.map((item) => `${item.name} × ${item.quantity}`).join(", ").slice(0, 80)}
                   </div>
                 </div>

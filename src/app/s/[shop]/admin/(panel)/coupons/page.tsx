@@ -5,8 +5,8 @@ import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPaise } from "@/lib/money";
 import { createCoupon, toggleCoupon } from "./actions";
+import { indiaDate } from "@/lib/dates";
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" });
 
 export default async function CouponsPage() {
   const { shop } = await requireShopPermission("coupons:manage");
@@ -56,8 +56,8 @@ export default async function CouponsPage() {
                       {coupon.usageLimit !== null && ` / ${coupon.usageLimit}`}
                     </td>
                     <td>
-                      {coupon.startsAt ? dateFormat.format(coupon.startsAt) : "Now"} –{" "}
-                      {coupon.endsAt ? dateFormat.format(coupon.endsAt) : "No end"}
+                      {coupon.startsAt ? indiaDate.format(coupon.startsAt) : "Now"} –{" "}
+                      {coupon.endsAt ? indiaDate.format(coupon.endsAt) : "No end"}
                     </td>
                     <td>
                       <form action={toggleCoupon.bind(null, coupon.id)}>

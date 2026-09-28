@@ -14,6 +14,7 @@ import {
 import { requireShop } from "@/lib/tenant";
 import { respondToUpiRequest } from "./actions";
 import styles from "./upi-app.module.scss";
+import { indiaDateTimeSeconds } from "@/lib/dates";
 
 export const metadata = { title: "Test UPI app", robots: { index: false } };
 
@@ -23,7 +24,6 @@ const ERRORS: Record<string, string> = {
   already: "You have already approved this request.",
 };
 
-const timeFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "medium" });
 
 export default async function TestUpiAppPage({ params, searchParams }: PageProps<"/s/[shop]/pay/test/[orderId]/app">) {
   const { orderId } = await params;
@@ -63,7 +63,7 @@ export default async function TestUpiAppPage({ params, searchParams }: PageProps
               <dt>Transaction ID</dt>
               <dd>{payment.id}</dd>
               <dt>Time</dt>
-              <dd>{timeFormat.format(payment.createdAt)}</dd>
+              <dd>{indiaDateTimeSeconds.format(payment.createdAt)}</dd>
               <dt>Scenario</dt>
               <dd>{SIMULATOR_SCENARIOS[payment.scenario as keyof typeof SIMULATOR_SCENARIOS] ?? payment.scenario}</dd>
             </dl>

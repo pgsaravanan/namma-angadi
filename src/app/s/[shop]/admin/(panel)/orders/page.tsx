@@ -7,6 +7,7 @@ import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPaise } from "@/lib/money";
 import { releaseExpiredOrders } from "@/lib/orders";
+import { indiaDateTime } from "@/lib/dates";
 
 const FILTERS: { label: string; status?: OrderStatus }[] = [
   { label: "All" },
@@ -17,7 +18,6 @@ const FILTERS: { label: string; status?: OrderStatus }[] = [
   { label: "Refunded", status: "REFUNDED" },
 ];
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function OrdersPage({ searchParams }: PageProps<"/s/[shop]/admin/orders">) {
   const { shop } = await requireShopPermission("orders:manage");
@@ -72,7 +72,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/s/[shop]/
                     <td>
                       <Link href={`/admin/orders/${order.id}`}>#{order.number}</Link>
                     </td>
-                    <td>{dateFormat.format(order.createdAt)}</td>
+                    <td>{indiaDateTime.format(order.createdAt)}</td>
                     <td>
                       {order.customerName}
                       <div className={ui.muted}>{order.customerPhone}</div>

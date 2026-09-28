@@ -11,6 +11,7 @@ import { isPaidStatus } from "@/lib/order-status";
 import { requireShop } from "@/lib/tenant";
 import storeStyles from "../../store.module.scss";
 import styles from "./order.module.scss";
+import { indiaDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Your order", robots: { index: false } };
 
@@ -36,7 +37,6 @@ const NEXT_STEPS: Partial<Record<OrderStatus, string>> = {
 
 const METHOD_LABELS: Record<string, string> = { upi: "UPI", card: "Card", netbanking: "Netbanking", wallet: "Wallet" };
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/[token]">) {
   const { token } = await params;
@@ -76,7 +76,7 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
             {headline}
           </h1>
           <p className={ui.muted}>
-            Order #{order.number} · placed {dateFormat.format(order.createdAt)}
+            Order #{order.number} · placed {indiaDateTime.format(order.createdAt)}
           </p>
         </div>
         <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
@@ -144,7 +144,7 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
                 {order.paidAt && (
                   <>
                     <dt>Paid on</dt>
-                    <dd>{dateFormat.format(order.paidAt)}</dd>
+                    <dd>{indiaDateTime.format(order.paidAt)}</dd>
                   </>
                 )}
                 <dt>Transaction ID</dt>

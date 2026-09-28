@@ -3,10 +3,10 @@ import styles from "@/components/admin/AdminShell.module.scss";
 import ui from "@/components/ui/ui.module.scss";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { indiaDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Email log · Namma Angadi", robots: { index: false } };
 
-const timeFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" });
 
 const STATUS_TEXT: Record<string, string> = {
   sent: "Sent",
@@ -41,7 +41,7 @@ export default async function EmailLogPage() {
           <summary className={styles.emailSummary}>
             <strong>{email.subject}</strong>
             <span className={ui.muted}>
-              to {email.to} · {email.shopId ? shopName.get(email.shopId) : "Platform"} · {timeFormat.format(email.createdAt)} ·{" "}
+              to {email.to} · {email.shopId ? shopName.get(email.shopId) : "Platform"} · {indiaDateTime.format(email.createdAt)} ·{" "}
               {STATUS_TEXT[email.status] ?? email.status}
             </span>
           </summary>
