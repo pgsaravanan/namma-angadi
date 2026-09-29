@@ -84,6 +84,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
   const [error, setError] = useState<string | null>(paymentNotice ? (PAYMENT_NOTICES[paymentNotice] ?? null) : null);
   const [lastCheckout, setLastCheckout] = useState<{ key: string; at: number; response: CheckoutResponse } | null>(null);
   const [paying, setPaying] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const quotePincode = deliveryMethod === "delivery" && PINCODE.test(pincode) ? pincode : null;
 
@@ -97,6 +98,18 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
       cancelled = true;
     };
   }, [lines, couponCode, deliveryMethod, quotePincode]);
+
+  if (confirming) {
+    return (
+      <div className={styles.confirming} role="status">
+        <div className={styles.confirmingTick} aria-hidden>
+          ✓
+        </div>
+        <h2>Payment received</h2>
+        <p>Confirming your order with the shop… this takes a few seconds.</p>
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -157,6 +170,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
         shopName,
         methods,
         onPaid: async (provider, payload) => {
+          setConfirming(true);
           try {
             await postJson("/api/checkout/verify", { provider, payload });
           } catch {
@@ -190,6 +204,20 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                 <div>
                   <div className={styles.lineName}>{line.name}</div>
                   <div className={ui.muted}>{formatPaise(line.unitPricePaise)} each</div>
+                  {line.stock === 0 ? (
+                    <div className={`${styles.stockNote} ${styles.soldOut}`}>Sold out, please remove it</div>
+                  ) : line.quantity >= line.stock ? (
+                    <div className={styles.stockNote}>Only {line.stock} available</div>
+                  ) : line.stock <= 5 ? (
+                    <div className={styles.stockNote}>Only {line.stock} left</div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={styles.remove}
+                    onClick={() => setQuantity(line.productId, line.variantId, 0)}
+                  >
+                    Remove
+                  </button>
                 </div>
                 <div className={styles.stepper}>
                   <button
@@ -204,6 +232,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                     type="button"
                     aria-label={`Add one ${line.name}`}
                     disabled={line.quantity >= Math.min(line.stock, MAX_QUANTITY)}
+                    title={line.quantity >= line.stock ? `Only ${line.stock} available` : undefined}
                     onClick={() => setQuantity(line.productId, line.variantId, line.quantity + 1)}
                   >
                     +

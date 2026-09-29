@@ -20,6 +20,16 @@ export function ProductPurchase({ shopId, productId, pricePaise, stock, variants
   const selected = variants.find((variant) => variant.id === variantId);
   const available = selected ? selected.stock : stock;
   const max = Math.min(available, MAX_QUANTITY);
+  const stockNote =
+    available === 0
+      ? "Sold out for now. Please check back soon."
+      : quantity >= max
+        ? available <= MAX_QUANTITY
+          ? `That's all we have: ${available} available.`
+          : `You can add up to ${MAX_QUANTITY} at a time.`
+        : available <= 5
+          ? `Only ${available} left.`
+          : null;
 
   return (
     <div className={styles.wrap}>
@@ -75,6 +85,11 @@ export function ProductPurchase({ shopId, productId, pricePaise, stock, variants
             quantity={quantity}
           />
         </div>
+        {stockNote && (
+          <p className={available === 0 ? `${styles.stockNote} ${styles.soldOut}` : styles.stockNote} role="status">
+            {stockNote}
+          </p>
+        )}
         <Link href="/cart" className={`${ui.button} ${ui.secondary} ${ui.block}`}>
           View bag and pay
         </Link>
