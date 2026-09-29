@@ -205,9 +205,9 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                   <div className={styles.lineName}>{line.name}</div>
                   <div className={ui.muted}>{formatPaise(line.unitPricePaise)} each</div>
                   {line.stock === 0 ? (
-                    <div className={`${styles.stockNote} ${styles.soldOut}`}>Sold out, please remove it</div>
+                    <div className={`${styles.stockNote} ${styles.soldOut}`}>Sorry, this has just sold out. Please remove it.</div>
                   ) : line.quantity >= line.stock ? (
-                    <div className={styles.stockNote}>Only {line.stock} available</div>
+                    <div className={styles.stockNote}>Sorry, we only have {line.stock} available</div>
                   ) : line.stock <= 5 ? (
                     <div className={styles.stockNote}>Only {line.stock} left</div>
                   ) : null}
@@ -232,7 +232,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                     type="button"
                     aria-label={`Add one ${line.name}`}
                     disabled={line.quantity >= Math.min(line.stock, MAX_QUANTITY)}
-                    title={line.quantity >= line.stock ? `Only ${line.stock} available` : undefined}
+                    title={line.quantity >= line.stock ? `Sorry, we only have ${line.stock} available` : undefined}
                     onClick={() => setQuantity(line.productId, line.variantId, line.quantity + 1)}
                   >
                     +

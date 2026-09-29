@@ -22,11 +22,11 @@ export function ProductPurchase({ shopId, productId, pricePaise, stock, variants
   const max = Math.min(available, MAX_QUANTITY);
   const stockNote =
     available === 0
-      ? "Sold out for now. Please check back soon."
+      ? "Sorry, this is sold out right now. Please check back soon."
       : quantity >= max
         ? available <= MAX_QUANTITY
-          ? `That's all we have: ${available} available.`
-          : `You can add up to ${MAX_QUANTITY} at a time.`
+          ? `Sorry, we only have ${available} available right now.`
+          : `Sorry, you can add up to ${MAX_QUANTITY} at a time.`
         : available <= 5
           ? `Only ${available} left.`
           : null;
