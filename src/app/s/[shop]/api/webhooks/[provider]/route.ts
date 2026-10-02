@@ -13,16 +13,17 @@ export async function POST(request: Request, { params }: RouteContext<"/s/[shop]
   const event = getProvider(config.provider).parseWebhook(config, rawBody, request.headers);
   if (!event) return new Response("Invalid signature", { status: 401 });
 
-  if (event.id && (await db.webhookEvent.findUnique({ where: { id: event.id } }))) {
+  const eventKey = event.id ? `${shop.id}:${event.id}` : null;
+  if (eventKey && (await db.webhookEvent.findUnique({ where: { id: eventKey } }))) {
     return new Response("Already processed");
   }
 
   await handleWebhookEvent(config, event);
 
-  if (event.id) {
+  if (eventKey) {
     await db.webhookEvent.upsert({
-      where: { id: event.id },
-      create: { id: event.id, shopId: shop.id, event: event.type },
+      where: { id: eventKey },
+      create: { id: eventKey, shopId: shop.id, event: event.type },
       update: {},
     });
   }

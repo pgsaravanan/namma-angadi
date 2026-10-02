@@ -76,12 +76,15 @@ export async function inviteToShop(input: {
     return { status: "added" };
   }
 
+  const inOtherShops = existing ? await belongsToOtherShops(existing.id, input.shop.id) : false;
   const user = existing
-    ? await db.user.update({ where: { id: existing.id }, data: { name: input.name } })
+    ? inOtherShops
+      ? existing
+      : await db.user.update({ where: { id: existing.id }, data: { name: input.name } })
     : await db.user.create({
         data: { email, name: input.name, passwordHash: await hashPassword(randomToken(32)), passwordSetAt: null },
       });
-  const reveal = input.byPlatformAdmin || !(await belongsToOtherShops(user.id, input.shop.id));
+  const reveal = Boolean(input.byPlatformAdmin);
   await db.membership.create({ data: { shopId: input.shop.id, userId: user.id, role: input.role } });
 
   const link = await createInviteLink(input.shop, user.id);
@@ -98,6 +101,5 @@ export async function resendInvite(shop: InviteShop, userId: string, invitedBy: 
 
   const link = await createInviteLink(shop, userId);
   await sendInviteEmail(shop, membership.user.email, membership.user.name, membership.role, link, invitedBy);
-  const reveal = byPlatformAdmin || !(await belongsToOtherShops(userId, shop.id));
-  return { link: reveal ? link : null };
+  return { link: byPlatformAdmin ? link : null };
 }

@@ -41,6 +41,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
     include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
   });
   const products = await withRatings(
+    shop.id,
     found.filter(
       (product) =>
         !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),

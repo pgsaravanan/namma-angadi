@@ -47,13 +47,13 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
       include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
     }),
     db.productReview.findMany({
-      where: { productId: product.id, status: "APPROVED" },
+      where: { shopId: shop.id, productId: product.id, status: "APPROVED" },
       orderBy: { createdAt: "desc" },
       take: 30,
     }),
-    ratingSummaries([product.id]),
+    ratingSummaries(shop.id, [product.id]),
   ]);
-  const related = await withRatings(relatedProducts);
+  const related = await withRatings(shop.id, relatedProducts);
   const summary = summaries.get(product.id);
 
   return (

@@ -46,7 +46,7 @@ export default async function StoreHomePage() {
       select: { id: true, caption: true, customerName: true, place: true, mediaUrl: true },
     }),
   ]);
-  const ratings = await ratingSummaries([...newIn, ...promotions.flatMap((promotion) => promotion.products)].map((p) => p.id));
+  const ratings = await ratingSummaries(shop.id, [...newIn, ...promotions.flatMap((promotion) => promotion.products)].map((p) => p.id));
   const rated = <T extends { id: string }>(product: T) => ({ ...product, rating: ratings.get(product.id) ?? null });
   const spotlights = promotions
     .filter((promotion) => promotion.products.length > 0)

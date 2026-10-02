@@ -274,6 +274,26 @@ export async function markOrderPaid(shopId: string, provider: ProviderId, paymen
   }
 }
 
+async function savePayment(
+  client: Pick<Tx, "payment">,
+  orderId: string,
+  provider: ProviderId,
+  payment: ProviderPayment,
+  status: string,
+) {
+  const key = { provider_providerPaymentId: { provider, providerPaymentId: payment.id } };
+  const existing = await client.payment.findUnique({ where: key, select: { orderId: true } });
+  if (existing && existing.orderId !== orderId) {
+    console.error("Payment id already belongs to another order", { orderId, paymentId: payment.id });
+    throw new Error("Payment belongs to a different order");
+  }
+  await client.payment.upsert({
+    where: key,
+    create: { orderId, provider, providerPaymentId: payment.id, method: payment.method, amountPaise: payment.amountPaise, status },
+    update: { status, method: payment.method },
+  });
+}
+
 async function recordPayment(shopId: string, provider: ProviderId, payment: ProviderPayment) {
   let justPaid = false;
   const order = await db.$transaction(async (tx) => {
@@ -285,18 +305,7 @@ async function recordPayment(shopId: string, provider: ProviderId, payment: Prov
       throw new Error("Payment amount does not match the order");
     }
 
-    await tx.payment.upsert({
-      where: { provider_providerPaymentId: { provider, providerPaymentId: payment.id } },
-      create: {
-        orderId: order.id,
-        provider,
-        providerPaymentId: payment.id,
-        method: payment.method,
-        amountPaise: payment.amountPaise,
-        status: payment.status,
-      },
-      update: { status: payment.status, method: payment.method },
-    });
+    await savePayment(tx, order.id, provider, payment, payment.status);
 
     if (isPaidStatus(order.status) || order.status === "REFUNDED") return order;
 
@@ -354,18 +363,7 @@ export async function confirmClientPayment(shop: Shop, providerInput: string, pa
 export async function recordFailedPayment(shopId: string, provider: ProviderId, payment: ProviderPayment) {
   const order = await db.order.findFirst({ where: { shopId, provider, providerOrderId: payment.providerOrderId } });
   if (!order) return;
-  await db.payment.upsert({
-    where: { provider_providerPaymentId: { provider, providerPaymentId: payment.id } },
-    create: {
-      orderId: order.id,
-      provider,
-      providerPaymentId: payment.id,
-      method: payment.method,
-      amountPaise: payment.amountPaise,
-      status: "failed",
-    },
-    update: { status: "failed" },
-  });
+  await savePayment(db, order.id, provider, payment, "failed");
 }
 
 export async function expireOrderNow(shopId: string, orderId: string) {
@@ -377,7 +375,10 @@ export async function handleWebhookEvent(config: PaymentConfig, event: WebhookEv
   if (event.type === "payment.captured") await markOrderPaid(config.shopId, config.provider, event.payment);
   if (event.type === "payment.failed") await recordFailedPayment(config.shopId, config.provider, event.payment);
   if (event.type === "refund.updated") {
-    await db.refund.updateMany({ where: { providerRefundId: event.refundId }, data: { status: event.status } });
+    await db.refund.updateMany({
+      where: { providerRefundId: event.refundId, order: { shopId: config.shopId } },
+      data: { status: event.status },
+    });
   }
 }
 

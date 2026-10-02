@@ -98,18 +98,18 @@ export async function hideOrderFeedback(shopId: string, feedbackId: string) {
 
 export type RatingSummary = { average: number; count: number };
 
-export async function ratingSummaries(productIds: string[]) {
+export async function ratingSummaries(shopId: string, productIds: string[]) {
   if (!productIds.length) return new Map<string, RatingSummary>();
   const rows = await db.productReview.groupBy({
     by: ["productId"],
-    where: { productId: { in: productIds }, status: "APPROVED" },
+    where: { shopId, productId: { in: productIds }, status: "APPROVED" },
     _avg: { rating: true },
     _count: true,
   });
   return new Map(rows.map((row) => [row.productId, { average: row._avg.rating ?? 0, count: row._count }]));
 }
 
-export async function withRatings<T extends { id: string }>(products: T[]) {
-  const ratings = await ratingSummaries(products.map((product) => product.id));
+export async function withRatings<T extends { id: string }>(shopId: string, products: T[]) {
+  const ratings = await ratingSummaries(shopId, products.map((product) => product.id));
   return products.map((product) => ({ ...product, rating: ratings.get(product.id) ?? null }));
 }
