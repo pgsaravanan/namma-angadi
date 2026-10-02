@@ -254,7 +254,18 @@ export default async function PromotionsPage() {
           <div className={styles.storyGrid}>
             {stories.map((story) => (
               <article key={story.id} className={story.isActive ? styles.storyCard : `${styles.storyCard} ${styles.storyOff}`}>
-                <Media url={story.mediaUrl} alt={story.caption} className={styles.storyMedia} />
+                {story.mediaUrl ? (
+                  <Media url={story.mediaUrl} alt={story.caption} className={styles.storyMedia} />
+                ) : (
+                  <div className={`${styles.storyMedia} ${styles.storyPlaceholder}`}>
+                    {(shop.iconUrl ?? shop.logoUrl) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={(shop.iconUrl ?? shop.logoUrl)!} alt="" />
+                    ) : (
+                      <span>{shop.name.charAt(0)}</span>
+                    )}
+                  </div>
+                )}
                 <div className={styles.storyBody}>
                   <span className={story.isActive ? `${styles.pill} ${styles.pillLive}` : styles.pill}>
                     {story.isActive ? "Showing" : "Hidden"}

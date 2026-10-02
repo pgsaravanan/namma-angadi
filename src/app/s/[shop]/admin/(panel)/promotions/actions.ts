@@ -192,7 +192,6 @@ async function readStory(shopId: string, formData: FormData, currentMedia: strin
 
   const media = await readMedia(shopId, formData, "stories", currentMedia);
   if ("error" in media) return { error: media.error };
-  if (!media.mediaUrl) return { error: "Add a photo, GIF or video" };
 
   const { caption, customerName, place } = parsed.data;
   return { data: { caption, customerName: customerName || null, place: place || null, mediaUrl: media.mediaUrl } };

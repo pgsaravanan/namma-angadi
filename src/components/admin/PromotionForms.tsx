@@ -213,7 +213,7 @@ export function ConfirmButton({
   );
 }
 
-export type StoryValues = { caption: string; customerName: string; place: string; mediaUrl: string };
+export type StoryValues = { caption: string; customerName: string; place: string; mediaUrl: string | null };
 
 export function StoryForm({ action, initial }: { action: Action; initial?: StoryValues }) {
   const form = useRef<HTMLFormElement>(null);
@@ -232,10 +232,9 @@ export function StoryForm({ action, initial }: { action: Action; initial?: Story
       <MediaInput
         key={formKey}
         name="media"
-        label="Photo, GIF or video"
+        label="Photo, GIF or video (optional, your logo shows if you skip it)"
         kind="stories"
         currentUrl={initial?.mediaUrl}
-        required
       />
       <label className={ui.field}>
         <span className={ui.label}>What would you like to say?</span>

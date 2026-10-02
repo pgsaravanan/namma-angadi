@@ -1,9 +1,9 @@
 import type { Story } from "./CustomerStories";
 import styles from "./CustomerStories.module.scss";
-import { FramedMedia } from "./FramedMedia";
+import { FramedMedia, type MediaPlaceholder } from "./FramedMedia";
 import { TickerTrack } from "./SpotlightParts";
 
-export function LatestDeliveries({ stories }: { stories: Story[] }) {
+export function LatestDeliveries({ stories, placeholder }: { stories: Story[]; placeholder: MediaPlaceholder }) {
   return (
     <aside className={styles.panel} aria-labelledby="latest-deliveries">
       <div className={styles.panelInner}>
@@ -14,7 +14,7 @@ export function LatestDeliveries({ stories }: { stories: Story[] }) {
         <TickerTrack className={styles.feed}>
           {stories.map((story) => (
             <figure key={story.id} className={styles.feedItem}>
-              <FramedMedia url={story.mediaUrl} className={styles.feedMedia} fit="cover" />
+              <FramedMedia url={story.mediaUrl} className={styles.feedMedia} fit="cover" placeholder={placeholder} />
               <figcaption className={styles.feedText}>
                 <p>{story.caption}</p>
                 {(story.customerName || story.place) && (

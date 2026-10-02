@@ -597,3 +597,18 @@
     line-height: 1.45;
   }
 }
+
+.storyPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  font-size: 40px;
+  font-weight: 600;
+
+  img {
+    width: 55%;
+    height: 55%;
+    object-fit: contain;
+  }
+}

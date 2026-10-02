@@ -50,6 +50,7 @@ export default async function StoreHomePage() {
     .map((promotion) => ({ ...promotion, couponCode: promotion.coupon?.isActive ? promotion.coupon.code : null }));
   const [firstSpotlight, ...moreSpotlights] = spotlights;
   const storiesBesideSpotlight = Boolean(firstSpotlight) && stories.length > 0;
+  const storyPlaceholder = { logoUrl: shop.iconUrl ?? shop.logoUrl, name: shop.name };
 
   const tiles = categories.map((category) => ({
     ...category,
@@ -98,12 +99,12 @@ export default async function StoreHomePage() {
           (storiesBesideSpotlight ? (
             <div className={styles.featureRow}>
               <Spotlight promotion={firstSpotlight} />
-              <LatestDeliveries stories={stories} />
+              <LatestDeliveries stories={stories} placeholder={storyPlaceholder} />
             </div>
           ) : (
             <Spotlight promotion={firstSpotlight} />
           ))}
-        {!firstSpotlight && stories.length > 0 && <CustomerStories stories={stories} />}
+        {!firstSpotlight && stories.length > 0 && <CustomerStories stories={stories} placeholder={storyPlaceholder} />}
         {moreSpotlights.map((promotion) => (
           <Spotlight key={promotion.id} promotion={promotion} />
         ))}
