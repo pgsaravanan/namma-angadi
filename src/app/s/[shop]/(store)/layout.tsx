@@ -69,6 +69,9 @@ export default async function StoreLayout({ children }: { children: React.ReactN
           <div>
             <h2 className={styles.footerTitle}>Contact</h2>
             <ul className={styles.footerLinks}>
+              <li>
+                <Link href="/contact">Send us a message</Link>
+              </li>
               {shop.contactName && <li>{shop.contactName}</li>}
               {shop.address && <li>{shop.address}</li>}
               {shop.supportPhone && (

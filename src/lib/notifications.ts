@@ -127,3 +127,39 @@ export function notifyStatusChange(orderId: string, status: OrderStatus) {
     });
   });
 }
+
+export function notifyContactMessage(messageId: string) {
+  runLater(async () => {
+    const message = await db.contactMessage.findUnique({
+      where: { id: messageId },
+      include: { shop: { include: { members: { where: { role: "SUPER_ADMIN" }, include: { user: true } } } } },
+    });
+    if (!message) return;
+    const { shop } = message;
+    const configured = shop.notifyEmail ?? shop.supportEmail;
+    const recipients = configured ? [configured] : shop.members.map((member) => member.user.email);
+    const base = shopBaseUrl(shop.slug, env.rootDomain, shop.customDomain);
+
+    for (const to of recipients) {
+      await sendEmail({
+        shopId: shop.id,
+        senderName: shop.name,
+        to,
+        subject: `New message from ${message.name}: ${message.topic}`,
+        replyTo: message.email,
+        text: [
+          `${message.name} sent a message through your shop's Contact us page.`,
+          "",
+          `Mobile: ${message.phone}`,
+          ...(message.email ? [`Email: ${message.email}`] : []),
+          ...(message.orderNumber ? [`Order: #${message.orderNumber}`] : []),
+          `About: ${message.topic}`,
+          "",
+          message.message,
+          "",
+          `See all messages: ${base}/admin/messages`,
+        ].join("\n"),
+      });
+    }
+  });
+}

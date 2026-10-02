@@ -17,6 +17,7 @@ const NAV: (NavItem & { permission: Permission })[] = [
   { href: "/admin/coupons", label: "Discounts", permission: "coupons:manage" },
   { href: "/admin/promotions", label: "Promotions", permission: "marketing:manage" },
   { href: "/admin/reviews", label: "Reviews", permission: "reviews:manage" },
+  { href: "/admin/messages", label: "Messages", permission: "messages:manage" },
   { href: "/admin/team", label: "Team", permission: "team:manage" },
   { href: "/admin/settings", label: "Settings", permission: "settings:manage" },
   { href: "/admin/policies", label: "Policies", permission: "settings:manage" },
@@ -26,15 +27,20 @@ export const metadata = { robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { shop, staff } = await requireShopPermission("dashboard:view");
-  const [snapshot, pendingReviews, pendingFeedback] = await Promise.all([
+  const [snapshot, pendingReviews, pendingFeedback, newMessages] = await Promise.all([
     newOrderSnapshot(shop.id),
     db.productReview.count({ where: { shopId: shop.id, status: "PENDING" } }),
     db.orderFeedback.count({ where: { shopId: shop.id, status: "PENDING", canPublish: true, comment: { not: "" } } }),
+    db.contactMessage.count({ where: { shopId: shop.id, repliedAt: null } }),
   ]);
+  const badges: Record<string, number> = {
+    "/admin/reviews": pendingReviews + pendingFeedback,
+    "/admin/messages": newMessages,
+  };
   const items = NAV.filter((item) => can(staff.role, item.permission)).map(({ href, label }) => ({
     href,
     label,
-    badge: href === "/admin/reviews" ? pendingReviews + pendingFeedback : undefined,
+    badge: badges[href],
   }));
 
   return (

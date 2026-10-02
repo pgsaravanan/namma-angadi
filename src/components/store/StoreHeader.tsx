@@ -6,7 +6,7 @@ import { SearchIcon, UserIcon } from "./icons";
 import { MobileMenu } from "./MobileMenu";
 import styles from "./StoreHeader.module.scss";
 
-const MAX_MENU_ITEMS = 5;
+const MAX_MENU_ITEMS = 4;
 
 type Props = {
   shop: Pick<Shop, "id" | "name" | "logoUrl">;
@@ -29,7 +29,7 @@ export function StoreHeader({ shop, categories, announcements }: Props) {
       <header className={styles.header}>
         <div className={styles.inner}>
           <nav className={styles.menu} aria-label="Shop categories">
-            {menu.map((item) => (
+            {[{ href: "/", label: "Home" }, ...menu, { href: "/contact", label: "Contact us" }].map((item) => (
               <Link key={item.href} href={item.href} className={styles.menuLink}>
                 {item.label}
               </Link>

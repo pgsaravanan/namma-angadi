@@ -8,6 +8,7 @@ export const PERMISSIONS = {
   "coupons:manage": ["SUPER_ADMIN"],
   "marketing:manage": ["SUPER_ADMIN", "ADMIN"],
   "reviews:manage": ["SUPER_ADMIN", "ADMIN"],
+  "messages:manage": ["SUPER_ADMIN", "ADMIN"],
   "team:manage": ["SUPER_ADMIN"],
   "settings:manage": ["SUPER_ADMIN"],
 } as const satisfies Record<string, readonly ShopRole[]>;

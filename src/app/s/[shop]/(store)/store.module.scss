@@ -580,3 +580,56 @@
   color: var(--color-text-muted);
   font-size: 13px;
 }
+
+.contactLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 32px;
+  align-items: start;
+  padding-top: 32px;
+  padding-bottom: 48px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.contactIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.contactWays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.whatsappLink {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
+}
+
+.contactDetails {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 6px 0 0;
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+}

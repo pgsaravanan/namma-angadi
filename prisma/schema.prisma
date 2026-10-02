@@ -91,6 +91,7 @@ model Shop {
   stories          CustomerStory[]
   reviews          ProductReview[]
   orderFeedback    OrderFeedback[]
+  contactMessages  ContactMessage[]
 }
 
 model User {
@@ -495,4 +496,21 @@ model OrderFeedback {
   order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([shopId, status, createdAt])
+}
+
+model ContactMessage {
+  id          String    @id @default(cuid())
+  shopId      String
+  name        String
+  phone       String
+  email       String?
+  topic       String
+  orderNumber String?
+  message     String
+  repliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, repliedAt, createdAt])
+  @@index([shopId, phone, createdAt])
 }
