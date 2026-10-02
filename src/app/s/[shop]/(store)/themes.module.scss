@@ -1,0 +1,53 @@
+@mixin royal-purple-light {
+  --color-bg: #f8f4fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #efe6f5;
+  --color-border: #e0d2ea;
+  --color-text: #2a1838;
+  --color-text-muted: #6b5a7a;
+  --color-primary: #5b2a86;
+  --color-primary-hover: #4a2170;
+  --color-primary-contrast: #ffffff;
+  --color-accent: #c9971f;
+  --color-hero-start: #3a1660;
+  --color-hero-end: #7a3fa8;
+  --color-tile-start: #7a3fa8;
+  --color-tile-end: #2e1050;
+  --color-footer-bg: #24103a;
+  --color-footer-text: #efe6f7;
+  --color-footer-muted: #bfa9d4;
+  --color-footer-faint: #a48fbb;
+  --color-footer-border: #3d2558;
+}
+
+@mixin royal-purple-dark {
+  --color-bg: #170d22;
+  --color-surface: #21142f;
+  --color-surface-muted: #2b1b3c;
+  --color-border: #3d2a52;
+  --color-text: #f2eaf8;
+  --color-text-muted: #b8a6c9;
+  --color-primary: #c39be6;
+  --color-primary-hover: #d3b3ef;
+  --color-primary-contrast: #1a0f26;
+  --color-accent: #e6bf5c;
+  --color-hero-start: #2e1050;
+  --color-hero-end: #6a3496;
+  --color-tile-start: #6a3496;
+  --color-tile-end: #24103a;
+  --color-footer-bg: #100818;
+}
+
+.theme {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+
+  &[data-theme="royal-purple"] {
+    @include royal-purple-light;
+
+    @media (prefers-color-scheme: dark) {
+      @include royal-purple-dark;
+    }
+  }
+}

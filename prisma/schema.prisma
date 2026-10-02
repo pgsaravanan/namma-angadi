@@ -66,6 +66,7 @@ model Shop {
   iconUrl                String?
   heroImageUrl           String?
   heroArtUrl             String?
+  theme                  String     @default("classic")
   heroTitle              String?
   heroSubtitle           String?
   about                  String?

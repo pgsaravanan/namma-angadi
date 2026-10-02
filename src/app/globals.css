@@ -17,6 +17,15 @@
   --color-danger-bg: #fdecea;
   --color-info: #245b91;
   --color-info-bg: #e7f0fa;
+  --color-hero-start: var(--color-primary);
+  --color-hero-end: color-mix(in srgb, var(--color-primary) 55%, var(--color-accent));
+  --color-tile-start: var(--color-accent);
+  --color-tile-end: var(--color-primary);
+  --color-footer-bg: #1c1512;
+  --color-footer-text: #e9e0d6;
+  --color-footer-muted: #b9ab9c;
+  --color-footer-faint: #9a8c7e;
+  --color-footer-border: #3a2f28;
 
   --radius-sm: 6px;
   --radius-md: 10px;

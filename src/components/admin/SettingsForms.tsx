@@ -9,6 +9,7 @@ import { StateSelect } from "@/components/ui/StateSelect";
 import { GST_RATES } from "@/lib/food";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/payment-methods";
 import { WEEK_DAYS } from "@/lib/shop-hours";
+import { SHOP_THEMES } from "@/lib/themes";
 import styles from "./AdminShell.module.scss";
 import type { ProviderId, ProviderInfo } from "@/lib/payments/catalog";
 
@@ -187,6 +188,7 @@ type StorefrontProps = {
     heroSubtitle: string | null;
     about: string | null;
     address: string | null;
+    theme: string;
   };
 };
 
@@ -201,6 +203,17 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
         <ImageInput name="hero" label="Banner photo (wide)" currentUrl={shop.heroImageUrl} shape="wide" />
         <ImageInput name="heroArt" label="Banner animation (beside the headline)" currentUrl={shop.heroArtUrl} />
       </div>
+      <label className={ui.field}>
+        <span className={ui.label}>Theme</span>
+        <select className={ui.input} name="theme" defaultValue={shop.theme}>
+          {SHOP_THEMES.map((theme) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.label} · {theme.hint}
+            </option>
+          ))}
+        </select>
+        <span className={ui.hint}>Colours for your store pages. Your admin pages stay the same.</span>
+      </label>
       <label className={ui.field}>
         <span className={ui.label}>Banner headline</span>
         <input className={ui.input} name="heroTitle" maxLength={80} defaultValue={shop.heroTitle ?? ""} placeholder="Home-made food, made with love" />

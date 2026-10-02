@@ -19,6 +19,7 @@ import { rupeesToPaise } from "@/lib/money";
 import { isProviderId, PROVIDERS } from "@/lib/payments/catalog";
 import { isValidTime, WEEK_DAYS } from "@/lib/shop-hours";
 import { deleteStoredImage, ImageUploadError, resolveImageField } from "@/lib/storage";
+import { DEFAULT_SHOP_THEME, isShopTheme } from "@/lib/themes";
 
 const detailsSchema = z.object({
   name: z.string().trim().min(2, "Enter the shop name").max(80),
@@ -107,6 +108,7 @@ const storefrontSchema = z.object({
   heroSubtitle: optionalText(160),
   about: optionalText(600),
   address: optionalText(200),
+  theme: z.string().refine(isShopTheme, "Choose a theme"),
 });
 
 export async function saveStorefront(_: FormState, formData: FormData): Promise<FormState> {
@@ -116,6 +118,7 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
     heroSubtitle: formData.get("heroSubtitle") ?? "",
     about: formData.get("about") ?? "",
     address: formData.get("address") ?? "",
+    theme: formData.get("theme") ?? DEFAULT_SHOP_THEME,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
@@ -137,8 +140,9 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
     throw error;
   }
 
-  const text = Object.fromEntries(Object.entries(parsed.data).map(([key, value]) => [key, value || null]));
-  await db.shop.update({ where: { id: shop.id }, data: { ...text, logoUrl, heroImageUrl, heroArtUrl, iconUrl } });
+  const { theme, ...fields } = parsed.data;
+  const text = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, value || null]));
+  await db.shop.update({ where: { id: shop.id }, data: { ...text, theme, logoUrl, heroImageUrl, heroArtUrl, iconUrl } });
   if (shop.logoUrl !== logoUrl) await deleteStoredImage(shop.logoUrl);
   if (shop.heroImageUrl !== heroImageUrl) await deleteStoredImage(shop.heroImageUrl);
   if (shop.iconUrl !== iconUrl) await deleteStoredImage(shop.iconUrl);
