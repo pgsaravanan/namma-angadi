@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 const razorpay = "https://checkout.razorpay.com https://api.razorpay.com https://*.razorpay.com";
+const supabase = process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : "";
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -9,7 +10,8 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${razorpay} ${isDev ? "ws:" : ""}`,
+  `connect-src 'self' ${razorpay} ${supabase} ${isDev ? "ws:" : ""}`,
+  `media-src 'self' blob: ${supabase}`,
   `frame-src ${razorpay}`,
   "frame-ancestors 'none'",
   "form-action 'self'",

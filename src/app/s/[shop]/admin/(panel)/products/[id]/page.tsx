@@ -34,6 +34,7 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
             label: variant.label,
             price: paiseToRupees(variant.pricePaise),
             stock: String(variant.stock),
+            packAmount: variant.packAmount ? String(variant.packAmount) : "",
           })),
         }}
       />

@@ -4,13 +4,14 @@ import ui from "@/components/ui/ui.module.scss";
 import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPaise } from "@/lib/money";
+import { formatStockAmount, isStockUnit, productStock } from "@/lib/stock";
 
 export default async function ProductsPage() {
   const { shop } = await requireShopPermission("products:manage");
   const products = await db.product.findMany({
     where: { shopId: shop.id },
     orderBy: { createdAt: "desc" },
-    include: { category: true },
+    include: { category: true, variants: { select: { stock: true, packAmount: true } } },
   });
 
   return (
@@ -57,7 +58,11 @@ export default async function ProductsPage() {
                     <td>{product.name}</td>
                     <td className={ui.muted}>{product.category?.name ?? "—"}</td>
                     <td>{formatPaise(product.pricePaise)}</td>
-                    <td>{product.stock}</td>
+                    <td>
+                      {isStockUnit(product.stockUnit)
+                        ? formatStockAmount(product.stock, product.stockUnit)
+                        : productStock(product)}
+                    </td>
                     <td>{product.isActive ? "Yes" : "Hidden"}</td>
                     <td>
                       <Link href={`/admin/products/${product.id}`} className={`${ui.button} ${ui.secondary} ${ui.small}`}>

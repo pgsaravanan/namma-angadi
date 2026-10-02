@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { ScrollReveal } from "@/components/store/ScrollReveal";
 import { StoreHeader } from "@/components/store/StoreHeader";
+import { WhatsAppButton } from "@/components/store/WhatsAppButton";
 import { listCategories } from "@/lib/categories";
+import { db } from "@/lib/db";
 import { formatIndianMobile } from "@/lib/india";
 import { POLICIES } from "@/lib/policies";
 import { openingHoursText, shopAvailability } from "@/lib/shop-hours";
@@ -24,15 +27,26 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     );
   }
 
-  const categories = await listCategories(shop.id);
+  const [categories, announcements] = await Promise.all([
+    listCategories(shop.id),
+    db.shopAnnouncement.findMany({
+      where: { shopId: shop.id },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      select: { id: true, message: true, link: true },
+    }),
+  ]);
   const availability = shopAvailability(shop);
   const hours = openingHoursText(shop);
 
   return (
     <>
-      <StoreHeader shop={shop} categories={categories} />
+      <StoreHeader shop={shop} categories={categories} announcements={announcements} />
       {!availability.open && <div className={styles.closedBar}>{availability.message}</div>}
       <main className={styles.main}>{children}</main>
+      <ScrollReveal />
+      {(shop.whatsappNumber || shop.supportPhone) && (
+        <WhatsAppButton number={(shop.whatsappNumber || shop.supportPhone)!} shopName={shop.name} />
+      )}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>

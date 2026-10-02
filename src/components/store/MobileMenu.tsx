@@ -41,7 +41,7 @@ export function MobileMenu({ shopName, items }: Props) {
             </button>
           </div>
           <nav className={styles.drawerLinks} aria-label="Shop categories">
-            {[...items, { href: "/account", label: "My account" }, { href: "/cart", label: "Bag" }].map((item) => (
+            {[{ href: "/", label: "Home" }, ...items, { href: "/account", label: "My account" }, { href: "/cart", label: "Bag" }].map((item) => (
               <Link key={item.href} href={item.href} onClick={close}>
                 {item.label}
               </Link>

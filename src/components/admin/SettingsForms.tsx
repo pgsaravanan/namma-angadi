@@ -19,7 +19,13 @@ export function ShopDetailsForm({
   shop,
 }: {
   action: Action;
-  shop: { name: string; contactName: string | null; supportEmail: string | null; supportPhone: string | null };
+  shop: {
+    name: string;
+    contactName: string | null;
+    supportEmail: string | null;
+    supportPhone: string | null;
+    whatsappNumber: string | null;
+  };
 }) {
   const [state, formAction] = useActionState(action, undefined);
 
@@ -43,6 +49,18 @@ export function ShopDetailsForm({
           <input className={ui.input} name="supportPhone" inputMode="numeric" maxLength={10} defaultValue={shop.supportPhone ?? ""} />
         </label>
       </div>
+      <label className={ui.field}>
+        <span className={ui.label}>WhatsApp number</span>
+        <input
+          className={ui.input}
+          name="whatsappNumber"
+          inputMode="numeric"
+          maxLength={10}
+          defaultValue={shop.whatsappNumber ?? ""}
+          placeholder="Leave empty to use the support phone"
+        />
+        <span className={ui.hint}>Customers see a WhatsApp button on every page that opens a chat with this number.</span>
+      </label>
       <FormMessage state={state} />
       <div>
         <SubmitButton>Save details</SubmitButton>
@@ -164,9 +182,9 @@ type StorefrontProps = {
     logoUrl: string | null;
     iconUrl: string | null;
     heroImageUrl: string | null;
+    heroArtUrl: string | null;
     heroTitle: string | null;
     heroSubtitle: string | null;
-    announcement: string | null;
     about: string | null;
     address: string | null;
   };
@@ -181,6 +199,7 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
         <ImageInput name="logo" label="Logo" currentUrl={shop.logoUrl} />
         <ImageInput name="icon" label="Browser tab icon (square)" currentUrl={shop.iconUrl} />
         <ImageInput name="hero" label="Banner photo (wide)" currentUrl={shop.heroImageUrl} shape="wide" />
+        <ImageInput name="heroArt" label="Banner animation (beside the headline)" currentUrl={shop.heroArtUrl} />
       </div>
       <label className={ui.field}>
         <span className={ui.label}>Banner headline</span>
@@ -195,17 +214,6 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
           defaultValue={shop.heroSubtitle ?? ""}
           placeholder="Fresh meals and traditional podi from our kitchen in Madurai"
         />
-      </label>
-      <label className={ui.field}>
-        <span className={ui.label}>Announcement strip</span>
-        <input
-          className={ui.input}
-          name="announcement"
-          maxLength={120}
-          defaultValue={shop.announcement ?? ""}
-          placeholder="Orders before 10 am are delivered the same day"
-        />
-        <span className={ui.hint}>Shown in a thin coloured bar at the very top. Leave empty to hide it.</span>
       </label>
       <label className={ui.field}>
         <span className={ui.label}>About the shop</span>

@@ -8,6 +8,7 @@ import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { GST_RATES, isFoodType } from "@/lib/food";
 import { rupeesToPaise } from "@/lib/money";
+import { isStockUnit, packsFromStock } from "@/lib/stock";
 import { deleteStoredImage, ImageUploadError, resolveImageField } from "@/lib/storage";
 
 const MAX_VARIANTS = 10;
@@ -17,6 +18,16 @@ const variantSchema = z.object({
   label: z.string().trim().min(1, "Give every pack size a name, e.g. 250 g").max(40),
   price: z.coerce.number().min(1, "Every pack size needs a price of at least ₹1").max(10_00_000),
   stock: z.coerce.number().int("Stock must be a whole number").min(0).max(1_000_000),
+  packAmount: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.coerce.number().int("Pack weight must be a whole number").min(1).max(1_000_000).optional(),
+  ),
+});
+
+const sharedStockSchema = z.object({
+  unit: z.string().refine(isStockUnit, "Choose weight or volume"),
+  total: z.coerce.number().min(0, "Total stock can't be negative").max(1_000_000, "Total stock is too high"),
+  totalIn: z.enum(["big", "small"]),
 });
 
 const productSchema = z.object({
@@ -60,6 +71,20 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
 
   const input = parsed.data;
   if (formData.get("hasVariants") === "on" && input.variants.length === 0) return { error: "Add at least one pack size" };
+
+  let shared: { unit: string; total: number } | null = null;
+  if (input.variants.length && formData.get("sharedStock") === "on") {
+    const sharedParsed = sharedStockSchema.safeParse({
+      unit: formData.get("stockUnit"),
+      total: formData.get("totalStock") || 0,
+      totalIn: formData.get("totalStockIn") ?? "big",
+    });
+    if (!sharedParsed.success) return { error: sharedParsed.error.issues[0]?.message };
+    const missing = input.variants.find((variant) => !variant.packAmount);
+    if (missing) return { error: `Enter how much is in each pack (${missing.label})` };
+    const { unit, total, totalIn } = sharedParsed.data;
+    shared = { unit, total: Math.round(total * (totalIn === "big" ? 1000 : 1)) };
+  }
   if (!input.variants.length && input.price < 1) return { error: "Price must be at least ₹1" };
 
   const existing = productId
@@ -88,7 +113,8 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     id: variant.id,
     label: variant.label,
     pricePaise: rupeesToPaise(variant.price),
-    stock: variant.stock,
+    stock: shared ? packsFromStock(shared.total, variant.packAmount ?? null) : variant.stock,
+    packAmount: variant.packAmount ?? null,
     position,
   }));
 
@@ -102,7 +128,8 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     hsnCode: input.hsnCode || null,
     gstRate: input.gstRate === "" ? null : Number(input.gstRate),
     pricePaise: variants.length ? Math.min(...variants.map((variant) => variant.pricePaise)) : rupeesToPaise(input.price),
-    stock: variants.length ? variants.reduce((sum, variant) => sum + variant.stock, 0) : input.stock,
+    stock: shared ? shared.total : variants.length ? variants.reduce((sum, variant) => sum + variant.stock, 0) : input.stock,
+    stockUnit: shared?.unit ?? null,
   };
 
   await db.$transaction(async (tx) => {

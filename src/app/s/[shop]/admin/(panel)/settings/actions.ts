@@ -25,6 +25,7 @@ const detailsSchema = z.object({
   contactName: z.string().trim().max(80, "Contact name is too long"),
   supportEmail: z.union([z.email("Enter a valid email"), z.literal("")]),
   supportPhone: z.union([z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"), z.literal("")]),
+  whatsappNumber: z.union([z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit WhatsApp number"), z.literal("")]),
 });
 
 export async function saveShopDetails(_: FormState, formData: FormData): Promise<FormState> {
@@ -32,10 +33,16 @@ export async function saveShopDetails(_: FormState, formData: FormData): Promise
   const parsed = detailsSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const { name, contactName, supportEmail, supportPhone } = parsed.data;
+  const { name, contactName, supportEmail, supportPhone, whatsappNumber } = parsed.data;
   await db.shop.update({
     where: { id: shop.id },
-    data: { name, contactName: contactName || null, supportEmail: supportEmail || null, supportPhone: supportPhone || null },
+    data: {
+      name,
+      contactName: contactName || null,
+      supportEmail: supportEmail || null,
+      supportPhone: supportPhone || null,
+      whatsappNumber: whatsappNumber || null,
+    },
   });
   revalidatePath("/", "layout");
   return { success: "Shop details saved" };
@@ -98,7 +105,6 @@ const optionalText = (max: number) => z.string().trim().max(max, `Keep it under 
 const storefrontSchema = z.object({
   heroTitle: optionalText(80),
   heroSubtitle: optionalText(160),
-  announcement: optionalText(120),
   about: optionalText(600),
   address: optionalText(200),
 });
@@ -108,7 +114,6 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
   const parsed = storefrontSchema.safeParse({
     heroTitle: formData.get("heroTitle") ?? "",
     heroSubtitle: formData.get("heroSubtitle") ?? "",
-    announcement: formData.get("announcement") ?? "",
     about: formData.get("about") ?? "",
     address: formData.get("address") ?? "",
   });
@@ -116,6 +121,7 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
 
   let logoUrl: string | null;
   let heroImageUrl: string | null;
+  let heroArtUrl: string | null;
   let iconUrl: string | null;
   try {
     logoUrl = await resolveImageField(shop.id, formData, { current: shop.logoUrl, field: "logo", kind: "branding" });
@@ -125,16 +131,18 @@ export async function saveStorefront(_: FormState, formData: FormData): Promise<
       field: "hero",
       kind: "branding",
     });
+    heroArtUrl = await resolveImageField(shop.id, formData, { current: shop.heroArtUrl, field: "heroArt", kind: "branding" });
   } catch (error) {
     if (error instanceof ImageUploadError) return { error: error.message };
     throw error;
   }
 
   const text = Object.fromEntries(Object.entries(parsed.data).map(([key, value]) => [key, value || null]));
-  await db.shop.update({ where: { id: shop.id }, data: { ...text, logoUrl, heroImageUrl, iconUrl } });
+  await db.shop.update({ where: { id: shop.id }, data: { ...text, logoUrl, heroImageUrl, heroArtUrl, iconUrl } });
   if (shop.logoUrl !== logoUrl) await deleteStoredImage(shop.logoUrl);
   if (shop.heroImageUrl !== heroImageUrl) await deleteStoredImage(shop.heroImageUrl);
   if (shop.iconUrl !== iconUrl) await deleteStoredImage(shop.iconUrl);
+  if (shop.heroArtUrl !== heroArtUrl) await deleteStoredImage(shop.heroArtUrl);
 
   revalidatePath("/", "layout");
   return { success: "Storefront saved. Open your store to see it." };

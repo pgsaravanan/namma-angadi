@@ -14,6 +14,7 @@ const NAV: (NavItem & { permission: Permission })[] = [
   { href: "/admin/products", label: "Products", permission: "products:manage" },
   { href: "/admin/categories", label: "Categories", permission: "products:manage" },
   { href: "/admin/coupons", label: "Discounts", permission: "coupons:manage" },
+  { href: "/admin/promotions", label: "Promotions", permission: "marketing:manage" },
   { href: "/admin/team", label: "Team", permission: "team:manage" },
   { href: "/admin/settings", label: "Settings", permission: "settings:manage" },
   { href: "/admin/policies", label: "Policies", permission: "settings:manage" },

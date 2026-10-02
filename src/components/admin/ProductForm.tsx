@@ -7,6 +7,7 @@ import { ImageInput } from "@/components/ui/ImageInput";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import ui from "@/components/ui/ui.module.scss";
 import { FOOD_TYPES, GST_RATES } from "@/lib/food";
+import { isStockUnit } from "@/lib/stock";
 import styles from "./AdminShell.module.scss";
 import { VariantsEditor, type VariantRow } from "./VariantsEditor";
 
@@ -20,6 +21,7 @@ type Props = {
     imageUrl: string | null;
     price: string;
     stock: number;
+    stockUnit: string | null;
     isActive: boolean;
     categoryId: string | null;
     foodType: string | null;
@@ -71,7 +73,10 @@ export function ProductForm({ action, categories, defaultGstRate, product }: Pro
         <textarea className={ui.input} name="description" defaultValue={product?.description} />
       </label>
 
-      <VariantsEditor initial={product?.variants ?? []} />
+      <VariantsEditor
+        initial={product?.variants ?? []}
+        shared={product && isStockUnit(product.stockUnit) ? { unit: product.stockUnit, total: product.stock } : null}
+      />
 
       <div className={ui.row}>
         <label className={ui.field}>

@@ -6,6 +6,7 @@ import { ProductPurchase } from "@/components/store/ProductPurchase";
 import { VegMark } from "@/components/store/VegMark";
 import { db } from "@/lib/db";
 import { formatIndianMobile } from "@/lib/india";
+import { variantStock } from "@/lib/stock";
 import { requireShop } from "@/lib/tenant";
 import styles from "../../store.module.scss";
 
@@ -39,7 +40,7 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
     },
     orderBy: { createdAt: "desc" },
     take: RELATED_COUNT,
-    include: { variants: { select: { pricePaise: true, stock: true } } },
+    include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
   });
 
   return (
@@ -70,7 +71,12 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
             productId={product.id}
             pricePaise={product.pricePaise}
             stock={product.stock}
-            variants={product.variants.map(({ id, label, pricePaise, stock }) => ({ id, label, pricePaise, stock }))}
+            variants={product.variants.map((variant) => ({
+              id: variant.id,
+              label: variant.label,
+              pricePaise: variant.pricePaise,
+              stock: variantStock(product, variant),
+            }))}
           />
           <p className={styles.note}>
             Pay securely by UPI at checkout.

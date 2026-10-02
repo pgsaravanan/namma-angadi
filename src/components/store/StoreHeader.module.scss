@@ -1,5 +1,11 @@
 .announcement {
-  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+  overflow: hidden;
   background: var(--color-primary);
   color: var(--color-primary-contrast);
   font-size: 13px;
@@ -7,10 +13,56 @@
   letter-spacing: 0.02em;
 }
 
-.header {
+.announcementText {
+  flex: 1;
+  max-width: 720px;
+  padding: 8px 0;
+  animation: announcement-in 0.45s ease-out;
+
+  a {
+    color: inherit;
+    text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes announcement-in {
+  from {
+    opacity: 0;
+    transform: translateY(60%);
+  }
+}
+
+.announcementArrow {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+
+  &:hover {
+    opacity: 1;
+    background: rgb(255 255 255 / 15%);
+  }
+}
+
+.sticky {
   position: sticky;
   top: 0;
   z-index: 20;
+}
+
+.header {
   background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--color-border);

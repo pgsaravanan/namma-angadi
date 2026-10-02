@@ -5,6 +5,7 @@ import { db } from "./db";
 import { calculateDiscount } from "./discount";
 import { formatPaise } from "./money";
 import { shopAvailability } from "./shop-hours";
+import { isStockUnit } from "./stock";
 
 export const cartLinesSchema = z
   .array(
@@ -50,6 +51,7 @@ export type QuoteLine = {
   quantity: number;
   lineTotalPaise: number;
   stock: number;
+  stockAmount: number | null;
   gstRate: number;
   hsnCode: string | null;
 };
@@ -106,6 +108,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
 
   const lines: QuoteLine[] = [];
   const problems: string[] = [];
+  const sharedLeft = new Map(products.filter((product) => isStockUnit(product.stockUnit)).map((product) => [product.id, product.stock]));
 
   for (const line of requested) {
     const product = byId.get(line.productId);
@@ -120,7 +123,13 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
 
     const name = variant ? `${product.name} (${variant.label})` : product.name;
     const unitPricePaise = variant?.pricePaise ?? product.pricePaise;
-    const stock = variant?.stock ?? product.stock;
+    const packAmount = sharedLeft.has(product.id) ? (variant?.packAmount ?? null) : null;
+    let stock = variant?.stock ?? product.stock;
+    if (sharedLeft.has(product.id)) {
+      const left = sharedLeft.get(product.id)!;
+      stock = packAmount ? Math.floor(left / packAmount) : 0;
+      if (packAmount) sharedLeft.set(product.id, left - Math.min(stock, line.quantity) * packAmount);
+    }
     if (stock < line.quantity) problems.push(stock === 0 ? `${name} is sold out` : `Only ${stock} of ${name} left`);
 
     lines.push({
@@ -133,6 +142,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
       quantity: line.quantity,
       lineTotalPaise: unitPricePaise * line.quantity,
       stock,
+      stockAmount: packAmount ? packAmount * line.quantity : null,
       gstRate: product.gstRate ?? shop.defaultGstRate,
       hsnCode: product.hsnCode,
     });

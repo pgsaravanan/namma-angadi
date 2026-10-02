@@ -13,8 +13,8 @@ type Props = {
   shape?: "square" | "wide";
 };
 
-const MAX_BYTES = 5 * 1024 * 1024;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+const MAX_BYTES = 4 * 1024 * 1024;
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function imageFrom(items: DataTransferItemList | null | undefined) {
   for (const item of Array.from(items ?? [])) {
@@ -32,11 +32,11 @@ export function ImageInput({ name, label, currentUrl, allowLink, pasteAnywhere, 
 
   const acceptFile = useCallback((file: File) => {
     if (!ACCEPTED.includes(file.type)) {
-      setError("Use a JPG, PNG or WebP photo");
+      setError("Use a JPG, PNG, WebP or GIF image");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError("Photos must be 5 MB or smaller");
+      setError("Photos must be 4 MB or smaller");
       return;
     }
     const transfer = new DataTransfer();
@@ -143,7 +143,7 @@ export function ImageInput({ name, label, currentUrl, allowLink, pasteAnywhere, 
             Remove this photo
           </label>
         )}
-        <span className={ui.hint}>JPG, PNG or WebP, up to 5 MB{pasteAnywhere ? ". You can paste anywhere on this page." : ""}</span>
+        <span className={ui.hint}>JPG, PNG, WebP or GIF, up to 4 MB{pasteAnywhere ? ". You can paste anywhere on this page." : ""}</span>
       </div>
       {error && <p className={`${ui.message} ${ui.error}`}>{error}</p>}
       {allowLink && (

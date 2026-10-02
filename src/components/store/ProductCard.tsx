@@ -2,17 +2,21 @@ import Link from "next/link";
 import type { Product, ProductVariant } from "@/generated/prisma/client";
 import ui from "@/components/ui/ui.module.scss";
 import { formatPaise } from "@/lib/money";
+import { productStock } from "@/lib/stock";
 import { AddToCartButton } from "./AddToCartButton";
 import styles from "./ProductCard.module.scss";
 import { VegMark } from "./VegMark";
 
-export type CardProduct = Pick<Product, "id" | "shopId" | "name" | "imageUrl" | "pricePaise" | "stock" | "foodType"> & {
-  variants: Pick<ProductVariant, "pricePaise" | "stock">[];
+export type CardProduct = Pick<
+  Product,
+  "id" | "shopId" | "name" | "imageUrl" | "pricePaise" | "stock" | "stockUnit" | "foodType"
+> & {
+  variants: Pick<ProductVariant, "pricePaise" | "stock" | "packAmount">[];
 };
 
 export function ProductCard({ product }: { product: CardProduct }) {
   const hasVariants = product.variants.length > 0;
-  const stock = hasVariants ? product.variants.reduce((sum, variant) => sum + variant.stock, 0) : product.stock;
+  const stock = productStock(product);
   const fromPrice = hasVariants ? Math.min(...product.variants.map((variant) => variant.pricePaise)) : product.pricePaise;
   const inStock = stock > 0;
 
@@ -54,7 +58,7 @@ export function ProductCard({ product }: { product: CardProduct }) {
 
 export function ProductGrid({ products }: { products: CardProduct[] }) {
   return (
-    <div className={styles.grid}>
+    <div className={styles.grid} data-reveal-group>
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}

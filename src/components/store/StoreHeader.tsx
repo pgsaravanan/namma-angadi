@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Category, Shop } from "@/generated/prisma/client";
+import { AnnouncementBar, type Announcement } from "./AnnouncementBar";
 import { CartLink } from "./CartLink";
 import { SearchIcon, UserIcon } from "./icons";
 import { MobileMenu } from "./MobileMenu";
@@ -7,9 +8,13 @@ import styles from "./StoreHeader.module.scss";
 
 const MAX_MENU_ITEMS = 5;
 
-type Props = { shop: Pick<Shop, "id" | "name" | "logoUrl" | "announcement">; categories: Pick<Category, "id" | "name">[] };
+type Props = {
+  shop: Pick<Shop, "id" | "name" | "logoUrl">;
+  categories: Pick<Category, "id" | "name">[];
+  announcements: Announcement[];
+};
 
-export function StoreHeader({ shop, categories }: Props) {
+export function StoreHeader({ shop, categories, announcements }: Props) {
   const menu = [
     ...categories.slice(0, MAX_MENU_ITEMS).map((category) => ({
       href: `/products?category=${category.id}`,
@@ -19,8 +24,8 @@ export function StoreHeader({ shop, categories }: Props) {
   ];
 
   return (
-    <>
-      {shop.announcement && <div className={styles.announcement}>{shop.announcement}</div>}
+    <div className={styles.sticky}>
+      <AnnouncementBar announcements={announcements} />
       <header className={styles.header}>
         <div className={styles.inner}>
           <nav className={styles.menu} aria-label="Shop categories">
@@ -52,6 +57,6 @@ export function StoreHeader({ shop, categories }: Props) {
           </div>
         </div>
       </header>
-    </>
+    </div>
   );
 }

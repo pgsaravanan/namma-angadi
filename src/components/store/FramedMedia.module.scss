@@ -1,0 +1,23 @@
+.frame {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 9%, var(--color-surface)),
+    color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))
+  );
+}
+
+.contain,
+.cover {
+  width: 100%;
+  height: 100%;
+}
+
+.contain {
+  object-fit: contain;
+}
+
+.cover {
+  object-fit: cover;
+}

@@ -60,9 +60,16 @@ function requirePaymentConfig(shop: Shop) {
   return config;
 }
 
-type StockLine = { productId: string; variantId: string | null; quantity: number };
+type StockLine = { productId: string; variantId: string | null; quantity: number; stockAmount: number | null };
 
 async function takeStock(tx: Tx, line: StockLine) {
+  if (line.stockAmount) {
+    const shared = await tx.product.updateMany({
+      where: { id: line.productId, stock: { gte: line.stockAmount } },
+      data: { stock: { decrement: line.stockAmount } },
+    });
+    return shared.count > 0;
+  }
   const where = { stock: { gte: line.quantity } };
   const data = { stock: { decrement: line.quantity } };
   const result = line.variantId
@@ -72,6 +79,10 @@ async function takeStock(tx: Tx, line: StockLine) {
 }
 
 async function returnStock(tx: Tx, line: StockLine) {
+  if (line.stockAmount) {
+    await tx.product.updateMany({ where: { id: line.productId }, data: { stock: { increment: line.stockAmount } } });
+    return;
+  }
   const data = { stock: { increment: line.quantity } };
   if (line.variantId) await tx.productVariant.updateMany({ where: { id: line.variantId }, data });
   else await tx.product.update({ where: { id: line.productId }, data });
@@ -196,6 +207,7 @@ async function placeOrder(shop: Shop, input: CheckoutInput, customerAccountId: s
                 name: line.name,
                 unitPricePaise: line.unitPricePaise,
                 quantity: line.quantity,
+                stockAmount: line.stockAmount,
               })),
             },
           },
