@@ -120,7 +120,9 @@ export function notifyStatusChange(orderId: string, status: OrderStatus) {
         "",
         `Your ${order.shop.name} order #${order.number} is now: ${label}.`,
         "",
-        `Track your order: ${base}/orders/${order.accessToken}`,
+        status === "DELIVERED"
+          ? `We hope you enjoy it! Tell us how it was and rate your items: ${base}/orders/${order.accessToken}#reviews`
+          : `Track your order: ${base}/orders/${order.accessToken}`,
       ].join("\n"),
     });
   });

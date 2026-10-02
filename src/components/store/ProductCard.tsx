@@ -4,6 +4,7 @@ import ui from "@/components/ui/ui.module.scss";
 import { formatPaise } from "@/lib/money";
 import { productStock } from "@/lib/stock";
 import { AddToCartButton } from "./AddToCartButton";
+import { Stars } from "./Stars";
 import styles from "./ProductCard.module.scss";
 import { VegMark } from "./VegMark";
 
@@ -12,6 +13,7 @@ export type CardProduct = Pick<
   "id" | "shopId" | "name" | "imageUrl" | "pricePaise" | "stock" | "stockUnit" | "foodType"
 > & {
   variants: Pick<ProductVariant, "pricePaise" | "stock" | "packAmount">[];
+  rating?: { average: number; count: number } | null;
 };
 
 export function ProductCard({ product }: { product: CardProduct }) {
@@ -38,6 +40,7 @@ export function ProductCard({ product }: { product: CardProduct }) {
         <Link href={`/p/${product.id}`} className={styles.name}>
           <VegMark type={product.foodType} /> {product.name}
         </Link>
+        {product.rating && <Stars value={product.rating.average} count={product.rating.count} small />}
         <div className={styles.price}>
           {hasVariants && <span className={styles.from}>From </span>}
           {formatPaise(fromPrice)}

@@ -45,6 +45,8 @@
 }
 
 .navLink {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   text-decoration: none;
@@ -611,4 +613,80 @@
     height: 55%;
     object-fit: contain;
   }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: inherit;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.tabActive {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  font-weight: 600;
+}
+
+.tabCount {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reviewCard {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+  }
+}
+
+.reviewMain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reviewComment {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.navBadge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
 }

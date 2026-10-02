@@ -7,6 +7,7 @@ import ui from "@/components/ui/ui.module.scss";
 import { listCategories } from "@/lib/categories";
 import { db } from "@/lib/db";
 import { releaseExpiredOrders } from "@/lib/orders";
+import { ratingSummaries } from "@/lib/reviews";
 import { requireShop } from "@/lib/tenant";
 import styles from "./store.module.scss";
 
@@ -45,9 +46,15 @@ export default async function StoreHomePage() {
       select: { id: true, caption: true, customerName: true, place: true, mediaUrl: true },
     }),
   ]);
+  const ratings = await ratingSummaries([...newIn, ...promotions.flatMap((promotion) => promotion.products)].map((p) => p.id));
+  const rated = <T extends { id: string }>(product: T) => ({ ...product, rating: ratings.get(product.id) ?? null });
   const spotlights = promotions
     .filter((promotion) => promotion.products.length > 0)
-    .map((promotion) => ({ ...promotion, couponCode: promotion.coupon?.isActive ? promotion.coupon.code : null }));
+    .map((promotion) => ({
+      ...promotion,
+      products: promotion.products.map(rated),
+      couponCode: promotion.coupon?.isActive ? promotion.coupon.code : null,
+    }));
   const [firstSpotlight, ...moreSpotlights] = spotlights;
   const storiesBesideSpotlight = Boolean(firstSpotlight) && stories.length > 0;
   const storyPlaceholder = { logoUrl: shop.iconUrl ?? shop.logoUrl, name: shop.name };
@@ -136,7 +143,7 @@ export default async function StoreHomePage() {
               View all
             </Link>
           </div>
-          {newIn.length ? <ProductGrid products={newIn} /> : <p className={ui.empty}>New products are coming soon.</p>}
+          {newIn.length ? <ProductGrid products={newIn.map(rated)} /> : <p className={ui.empty}>New products are coming soon.</p>}
         </section>
 
         {(shop.about || shop.address) && (

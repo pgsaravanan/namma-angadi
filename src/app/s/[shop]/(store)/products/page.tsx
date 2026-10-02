@@ -5,6 +5,7 @@ import ui from "@/components/ui/ui.module.scss";
 import { listCategories } from "@/lib/categories";
 import { db } from "@/lib/db";
 import { releaseExpiredOrders } from "@/lib/orders";
+import { withRatings } from "@/lib/reviews";
 import { requireShop } from "@/lib/tenant";
 import styles from "../store.module.scss";
 
@@ -34,15 +35,16 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
   const category = categories.find((candidate) => candidate.id === categoryId);
 
   const needle = query.toLowerCase();
-  const products = (
-    await db.product.findMany({
-      where: { shopId: shop.id, isActive: true, ...(category && { categoryId: category.id }) },
-      orderBy: sort.orderBy,
-      include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
-    })
-  ).filter(
-    (product) =>
-      !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),
+  const found = await db.product.findMany({
+    where: { shopId: shop.id, isActive: true, ...(category && { categoryId: category.id }) },
+    orderBy: sort.orderBy,
+    include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
+  });
+  const products = await withRatings(
+    found.filter(
+      (product) =>
+        !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),
+    ),
   );
 
   const linkFor = (nextCategory?: string) => {

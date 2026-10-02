@@ -141,3 +141,23 @@
 .billLink {
   margin-top: 16px;
 }
+
+.reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.reviewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.reviewText {
+  margin: 0;
+  white-space: pre-line;
+}

@@ -3,9 +3,12 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/store/ProductCard";
 import { ProductPurchase } from "@/components/store/ProductPurchase";
+import { Stars } from "@/components/store/Stars";
 import { VegMark } from "@/components/store/VegMark";
 import { db } from "@/lib/db";
+import { indiaDate } from "@/lib/dates";
 import { formatIndianMobile } from "@/lib/india";
+import { ratingSummaries, withRatings } from "@/lib/reviews";
 import { variantStock } from "@/lib/stock";
 import { requireShop } from "@/lib/tenant";
 import styles from "../../store.module.scss";
@@ -31,7 +34,8 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
   const { shop, product } = await findProduct(productId);
   if (!product) notFound();
 
-  const related = await db.product.findMany({
+  const [relatedProducts, reviews, summaries] = await Promise.all([
+    db.product.findMany({
     where: {
       shopId: shop.id,
       isActive: true,
@@ -40,8 +44,17 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
     },
     orderBy: { createdAt: "desc" },
     take: RELATED_COUNT,
-    include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
-  });
+      include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
+    }),
+    db.productReview.findMany({
+      where: { productId: product.id, status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+    }),
+    ratingSummaries([product.id]),
+  ]);
+  const related = await withRatings(relatedProducts);
+  const summary = summaries.get(product.id);
 
   return (
     <div className={`${styles.container} ${styles.stack}`}>
@@ -65,6 +78,11 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
           <h1 className={styles.productTitle}>
             <VegMark type={product.foodType} /> {product.name}
           </h1>
+          {summary && (
+            <a href="#reviews" className={styles.ratingLink}>
+              <Stars value={summary.average} count={summary.count} />
+            </a>
+          )}
           {product.description && <p className={styles.productDescription}>{product.description}</p>}
           <ProductPurchase
             shopId={shop.id}
@@ -84,6 +102,26 @@ export default async function ProductPage({ params }: PageProps<"/s/[shop]/p/[pr
           </p>
         </div>
       </div>
+
+      {summary && (
+        <section id="reviews" className={styles.reviewsSection}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.title}>Customer reviews</h2>
+            <Stars value={summary.average} count={summary.count} />
+          </div>
+          <div className={styles.reviewGrid}>
+            {reviews.map((review) => (
+              <article key={review.id} className={styles.reviewCard}>
+                <Stars value={review.rating} small />
+                <p>{review.comment}</p>
+                <span className={styles.reviewMeta}>
+                  <strong>{review.customerName}</strong> · Verified purchase · {indiaDate.format(review.createdAt)}
+                </span>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section>

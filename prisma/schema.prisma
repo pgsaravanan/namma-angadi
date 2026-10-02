@@ -89,6 +89,7 @@ model Shop {
   announcements    ShopAnnouncement[]
   promotions       Promotion[]
   stories          CustomerStory[]
+  reviews          ProductReview[]
 }
 
 model User {
@@ -152,6 +153,7 @@ model Product {
   items      OrderItem[]
   category   Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   promotions Promotion[]
+  reviews    ProductReview[]
 
   @@index([shopId, isActive])
 }
@@ -231,6 +233,7 @@ model Order {
   payments        Payment[]
   refunds         Refund[]
   customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  reviews         ProductReview[]
 
   @@unique([shopId, number])
   @@unique([shopId, invoiceNumber])
@@ -445,4 +448,30 @@ model CustomerStory {
   shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId, isActive, position])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+model ProductReview {
+  id           String       @id @default(cuid())
+  shopId       String
+  productId    String
+  orderId      String
+  customerName String
+  rating       Int
+  comment      String
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  reviewedAt   DateTime?
+  shop         Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, productId])
+  @@index([shopId, status, createdAt])
+  @@index([productId, status])
 }
