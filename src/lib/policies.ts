@@ -111,6 +111,8 @@ export function defaultPolicy(slug: PolicySlug, shop: PolicyShop) {
         "- Payments are handled by our payment partner. We never see or store your UPI PIN or card details.",
         "- We do not sell or share your details with anyone else, except delivery partners where needed to deliver your order, or when required by law.",
         "- If you create an account, your order history and saved address are kept so you can check out faster. You can ask us to delete your account at any time.",
+        "- Reviews and feedback you write, with the name you give, are shown on this shop only after we approve them. Order feedback stays private unless you tick the box to let us show it.",
+        "- If you tick the box at checkout, we may message you on WhatsApp or by email after delivery to ask how you liked your order. Just tell us if you'd like us to stop.",
         `To see, correct or delete your details, contact us on ${contact}.`,
       ].join("\n\n");
   }

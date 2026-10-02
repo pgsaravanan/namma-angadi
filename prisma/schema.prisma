@@ -90,6 +90,7 @@ model Shop {
   promotions       Promotion[]
   stories          CustomerStory[]
   reviews          ProductReview[]
+  orderFeedback    OrderFeedback[]
 }
 
 model User {
@@ -221,6 +222,7 @@ model Order {
   invoiceNumber     Int?
   sellerGstin       String?
   customerAccountId String?
+  reviewRequests    Boolean     @default(false)
   expiresAt         DateTime
   paidAt            DateTime?
   createdAt         DateTime    @default(now())
@@ -234,6 +236,7 @@ model Order {
   refunds         Refund[]
   customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
   reviews         ProductReview[]
+  feedback        OrderFeedback?
 
   @@unique([shopId, number])
   @@unique([shopId, invoiceNumber])
@@ -474,4 +477,22 @@ model ProductReview {
   @@unique([orderId, productId])
   @@index([shopId, status, createdAt])
   @@index([productId, status])
+}
+
+model OrderFeedback {
+  id           String       @id @default(cuid())
+  shopId       String
+  orderId      String       @unique
+  customerName String
+  rating       Int
+  comment      String       @default("")
+  canPublish   Boolean      @default(false)
+  storyId      String?      @unique
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  reviewedAt   DateTime?
+  shop         Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, status, createdAt])
 }

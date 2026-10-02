@@ -157,6 +157,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
           ? { line1: saved.line1, line2: saved.line2, city: saved.city, state: saved.state, pincode: saved.pincode }
           : undefined,
       createAccount: !account && createAccount ? { password: String(form.get("password") ?? "") } : undefined,
+      reviewRequests: form.get("reviewRequests") === "on",
     };
     const key = JSON.stringify({ ...request, createAccount: undefined });
 
@@ -421,6 +422,11 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                 </label>
               </fieldset>
             )}
+
+            <label className={ui.checkbox}>
+              <input type="checkbox" name="reviewRequests" />
+              Message me after delivery to ask how I liked my order (WhatsApp or email). You can say no anytime.
+            </label>
 
             {!account && (
               <div className={styles.accountBox}>

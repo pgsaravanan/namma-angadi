@@ -26,14 +26,15 @@ export const metadata = { robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { shop, staff } = await requireShopPermission("dashboard:view");
-  const [snapshot, pendingReviews] = await Promise.all([
+  const [snapshot, pendingReviews, pendingFeedback] = await Promise.all([
     newOrderSnapshot(shop.id),
     db.productReview.count({ where: { shopId: shop.id, status: "PENDING" } }),
+    db.orderFeedback.count({ where: { shopId: shop.id, status: "PENDING", canPublish: true, comment: { not: "" } } }),
   ]);
   const items = NAV.filter((item) => can(staff.role, item.permission)).map(({ href, label }) => ({
     href,
     label,
-    badge: href === "/admin/reviews" ? pendingReviews : undefined,
+    badge: href === "/admin/reviews" ? pendingReviews + pendingFeedback : undefined,
   }));
 
   return (

@@ -111,7 +111,7 @@ export function notifyStatusChange(orderId: string, status: OrderStatus) {
 
     await sendEmail({
       shopId: order.shopId,
-        senderName: order.shop.name,
+      senderName: order.shop.name,
       to: order.customerEmail,
       subject: `Order #${order.number}: ${label}`,
       replyTo: order.shop.supportEmail,
@@ -120,7 +120,7 @@ export function notifyStatusChange(orderId: string, status: OrderStatus) {
         "",
         `Your ${order.shop.name} order #${order.number} is now: ${label}.`,
         "",
-        status === "DELIVERED"
+        status === "DELIVERED" && order.reviewRequests
           ? `We hope you enjoy it! Tell us how it was and rate your items: ${base}/orders/${order.accessToken}#reviews`
           : `Track your order: ${base}/orders/${order.accessToken}`,
       ].join("\n"),

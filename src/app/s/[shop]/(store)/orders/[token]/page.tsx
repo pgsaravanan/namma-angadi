@@ -10,9 +10,9 @@ import { db } from "@/lib/db";
 import { addressLines, formatIndianMobile } from "@/lib/india";
 import { formatPaise } from "@/lib/money";
 import { isPaidStatus } from "@/lib/order-status";
-import { REVIEWABLE_STATUS } from "@/lib/reviews";
+import { FEEDBACK_MAX_LENGTH, REVIEWABLE_STATUS } from "@/lib/reviews";
 import { requireShop } from "@/lib/tenant";
-import { reviewItem } from "./actions";
+import { reviewItem, sendOrderFeedback } from "./actions";
 import storeStyles from "../../store.module.scss";
 import styles from "./order.module.scss";
 import { indiaDateTime } from "@/lib/dates";
@@ -52,6 +52,7 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
       coupon: true,
       payments: { orderBy: { createdAt: "desc" } },
       reviews: true,
+      feedback: true,
     },
   });
   if (!order) notFound();
@@ -174,6 +175,37 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
         </div>
       </div>
 
+      {isSuccess && (
+        <section className={ui.card}>
+          <h2 className={styles.sectionTitle}>How was ordering from {shop.name}?</h2>
+          {order.feedback ? (
+            <div className={styles.reviewItem}>
+              <Stars value={order.feedback.rating} />
+              {order.feedback.comment && <p className={styles.reviewText}>{order.feedback.comment}</p>}
+              <span className={ui.hint}>Thank you for your feedback!</span>
+            </div>
+          ) : (
+            <ReviewForm
+              action={sendOrderFeedback.bind(null, order.accessToken)}
+              question="Rate your ordering experience"
+              defaultName={firstName}
+              placeholder="Was it easy to order? Anything we could do better?"
+              notice="Only the shop sees your feedback unless you tick the box above."
+              commentOptional
+              askToPublish
+              maxLength={FEEDBACK_MAX_LENGTH}
+            />
+          )}
+          {!canReview && (
+            <p className={ui.hint}>
+              {order.reviewRequests
+                ? "After delivery we'll send you a link to rate your items."
+                : "Keep this page: after delivery you can come back here to rate your items."}
+            </p>
+          )}
+        </section>
+      )}
+
       {canReview && (
         <section id="reviews" className={ui.card}>
           <h2 className={styles.sectionTitle}>Rate your items</h2>
@@ -199,8 +231,10 @@ export default async function OrderPage({ params }: PageProps<"/s/[shop]/orders/
                   ) : (
                     <ReviewForm
                       action={reviewItem.bind(null, order.accessToken, productId)}
-                      productName={product.name}
+                      question={`How was ${product.name}?`}
                       defaultName={firstName}
+                      placeholder="What did you like? How was the taste and freshness?"
+                      notice="Your review and name will be shown on the shop once the shop approves it."
                     />
                   )}
                 </div>

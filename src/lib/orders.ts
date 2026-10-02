@@ -47,6 +47,7 @@ export const checkoutSchema = z.object({
   createAccount: z
     .object({ password: z.string().min(8, "Choose a password of at least 8 characters").max(200) })
     .optional(),
+  reviewRequests: z.boolean().default(false),
 }).refine((input) => input.deliveryMethod === "pickup" || input.address, {
   message: "Enter your delivery address",
   path: ["address"],
@@ -184,6 +185,7 @@ async function placeOrder(shop: Shop, input: CheckoutInput, customerAccountId: s
             customerEmail: email || null,
             couponId: quote.couponId,
             customerAccountId,
+            reviewRequests: input.reviewRequests,
             deliveryMethod: quote.deliveryMethod,
             deliveryFeePaise: quote.deliveryFeePaise,
             number: (last._max.number ?? FIRST_ORDER_NUMBER - 1) + 1,

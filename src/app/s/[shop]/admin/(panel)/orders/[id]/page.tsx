@@ -11,6 +11,9 @@ import { formatPaise } from "@/lib/money";
 import { nextStatuses } from "@/lib/orders";
 import { isPaidStatus } from "@/lib/order-status";
 import { can } from "@/lib/permissions";
+import { env } from "@/lib/env";
+import { shopBaseUrl } from "@/lib/host";
+import { reviewRequestWhatsAppUrl } from "@/lib/review-requests";
 import { cancelOrder, refundFullOrder, updateOrderStatus } from "../actions";
 import { indiaDateTime } from "@/lib/dates";
 
@@ -112,6 +115,24 @@ export default async function OrderDetailPage({ params }: PageProps<"/s/[shop]/a
               </>
             )}
           </p>
+          {order.status === "DELIVERED" &&
+            (order.reviewRequests ? (
+              <a
+                href={reviewRequestWhatsAppUrl({
+                  shopName: shop.name,
+                  customerName: order.customerName,
+                  phone: order.customerPhone,
+                  orderUrl: `${shopBaseUrl(shop.slug, env.rootDomain, shop.customDomain)}/orders/${order.accessToken}`,
+                })}
+                className={`${ui.button} ${ui.secondary} ${ui.small}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ask for a review on WhatsApp
+              </a>
+            ) : (
+              <p className={ui.hint}>The customer didn&apos;t opt in to review requests.</p>
+            ))}
           <h2 className={styles.cardTitle}>{order.deliveryMethod === "pickup" ? "Pickup" : "Delivery address"}</h2>
           {order.deliveryMethod === "pickup" ? (
             <p className={ui.muted}>Customer will collect from the shop.</p>
