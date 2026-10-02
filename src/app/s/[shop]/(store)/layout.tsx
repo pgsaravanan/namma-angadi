@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Shop } from "@/generated/prisma/client";
 import { ScrollReveal } from "@/components/store/ScrollReveal";
 import { StoreHeader } from "@/components/store/StoreHeader";
 import { WhatsAppButton } from "@/components/store/WhatsAppButton";
@@ -9,9 +8,7 @@ import { formatIndianMobile } from "@/lib/india";
 import { POLICIES } from "@/lib/policies";
 import { openingHoursText, shopAvailability } from "@/lib/shop-hours";
 import { requireShop } from "@/lib/tenant";
-import { shopTheme } from "@/lib/themes";
 import styles from "./store.module.scss";
-import themes from "./themes.module.scss";
 
 export async function generateMetadata() {
   const shop = await requireShop();
@@ -21,21 +18,15 @@ export async function generateMetadata() {
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const shop = await requireShop();
 
-  return (
-    <div className={themes.theme} data-theme={shopTheme(shop.theme)}>
-      {shop.status === "ACTIVE" ? (
-        <StoreContent shop={shop}>{children}</StoreContent>
-      ) : (
-        <main className={styles.unavailable}>
-          <h1>{shop.name}</h1>
-          <p>This shop is currently unavailable. Please check back later.</p>
-        </main>
-      )}
-    </div>
-  );
-}
+  if (shop.status !== "ACTIVE") {
+    return (
+      <main className={styles.unavailable}>
+        <h1>{shop.name}</h1>
+        <p>This shop is currently unavailable. Please check back later.</p>
+      </main>
+    );
+  }
 
-async function StoreContent({ shop, children }: { shop: Shop; children: React.ReactNode }) {
   const [categories, announcements] = await Promise.all([
     listCategories(shop.id),
     db.shopAnnouncement.findMany({

@@ -212,7 +212,7 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
             </option>
           ))}
         </select>
-        <span className={ui.hint}>Colours for your store pages. Your admin pages stay the same.</span>
+        <span className={ui.hint}>Colours for your store and these admin pages.</span>
       </label>
       <label className={ui.field}>
         <span className={ui.label}>Banner headline</span>
