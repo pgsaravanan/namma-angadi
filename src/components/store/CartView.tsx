@@ -180,6 +180,11 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
           clear();
           router.push(`/orders/${response.accessToken}`);
         },
+        onPaidElsewhere: () => {
+          setConfirming(true);
+          clear();
+          router.push(`/orders/${response.accessToken}`);
+        },
         onDismiss: () => {
           setPaying(false);
           setError(PAYMENT_NOTICES.cancelled);

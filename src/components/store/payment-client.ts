@@ -12,7 +12,11 @@ export type CheckoutResponse = {
 
 type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
 
-type RazorpayInstance = { open: () => void; on: (event: "payment.failed", handler: () => void) => void };
+type RazorpayInstance = {
+  open: () => void;
+  close: () => void;
+  on: (event: "payment.failed", handler: () => void) => void;
+};
 
 declare global {
   interface Window {
@@ -48,9 +52,21 @@ function loadRazorpay() {
 
 export type PaymentCallbacks = {
   onPaid: (provider: string, payload: Record<string, string>) => void;
+  onPaidElsewhere: () => void;
   onDismiss: () => void;
   onFailure: () => void;
 };
+
+const STATUS_CHECK_MS = 3000;
+
+async function isOrderPaid(accessToken: string) {
+  try {
+    const response = await fetch(`/api/checkout/status/${encodeURIComponent(accessToken)}`, { cache: "no-store" });
+    return response.ok && Boolean(((await response.json()) as { paid?: boolean }).paid);
+  } catch {
+    return false;
+  }
+}
 
 type StartPaymentOptions = {
   response: CheckoutResponse;
@@ -58,7 +74,15 @@ type StartPaymentOptions = {
   methods: PaymentMethod[];
 } & PaymentCallbacks;
 
-export async function startPayment({ response, shopName, methods, onPaid, onDismiss, onFailure }: StartPaymentOptions) {
+export async function startPayment({
+  response,
+  shopName,
+  methods,
+  onPaid,
+  onPaidElsewhere,
+  onDismiss,
+  onFailure,
+}: StartPaymentOptions) {
   const { checkout } = response;
 
   if (checkout.mode === "redirect") {
@@ -87,11 +111,51 @@ export async function startPayment({ response, shopName, methods, onPaid, onDism
         preferences: { show_default_blocks: false },
       },
     },
-    handler: (result: RazorpaySuccess) => onPaid("razorpay", { ...result }),
-    modal: { ondismiss: onDismiss, confirm_close: true },
+    handler: (result: RazorpaySuccess) => {
+      finish();
+      onPaid("razorpay", { ...result });
+    },
+    modal: {
+      ondismiss: async () => {
+        if (settled) return;
+        stopWatching();
+        if (await isOrderPaid(response.accessToken)) paidElsewhere();
+        else onDismiss();
+      },
+      confirm_close: true,
+    },
     retry: { enabled: true, max_count: 3 },
   });
-  razorpay.on("payment.failed", onFailure);
+
+  let settled = false;
+  const watcher = window.setInterval(async () => {
+    if (!settled && (await isOrderPaid(response.accessToken))) {
+      paidElsewhere();
+      razorpay.close();
+    }
+  }, STATUS_CHECK_MS);
+
+  function stopWatching() {
+    window.clearInterval(watcher);
+  }
+  function finish() {
+    settled = true;
+    stopWatching();
+  }
+  function paidElsewhere() {
+    if (settled) return;
+    finish();
+    onPaidElsewhere();
+  }
+
+  razorpay.on("payment.failed", async () => {
+    if (await isOrderPaid(response.accessToken)) {
+      paidElsewhere();
+      razorpay.close();
+    } else {
+      onFailure();
+    }
+  });
   razorpay.open();
 }
 
