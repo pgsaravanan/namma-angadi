@@ -183,7 +183,7 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
         onPaidElsewhere: () => {
           setConfirming(true);
           clear();
-          router.push(`/orders/${response.accessToken}`);
+          window.location.assign(new URL(`/orders/${response.accessToken}`, window.location.origin));
         },
         onDismiss: () => {
           setPaying(false);

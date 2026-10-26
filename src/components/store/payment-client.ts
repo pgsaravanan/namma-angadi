@@ -12,11 +12,7 @@ export type CheckoutResponse = {
 
 type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
 
-type RazorpayInstance = {
-  open: () => void;
-  close: () => void;
-  on: (event: "payment.failed", handler: () => void) => void;
-};
+type RazorpayInstance = { open: () => void; on: (event: "payment.failed", handler: () => void) => void };
 
 declare global {
   interface Window {
@@ -129,10 +125,7 @@ export async function startPayment({
 
   let settled = false;
   const watcher = window.setInterval(async () => {
-    if (!settled && (await isOrderPaid(response.accessToken))) {
-      paidElsewhere();
-      razorpay.close();
-    }
+    if (!settled && (await isOrderPaid(response.accessToken))) paidElsewhere();
   }, STATUS_CHECK_MS);
 
   function stopWatching() {
@@ -151,7 +144,6 @@ export async function startPayment({
   razorpay.on("payment.failed", async () => {
     if (await isOrderPaid(response.accessToken)) {
       paidElsewhere();
-      razorpay.close();
     } else {
       onFailure();
     }
