@@ -13,7 +13,7 @@ export const metadata = { title: "UPI Simulator", robots: { index: false } };
 export default async function UpiGatewayPage({ params }: PageProps<"/s/[shop]/pay/test/[orderId]">) {
   const { orderId } = await params;
   const shop = await requireShop();
-  if (!isProviderEnabled("testpay") || getShopPaymentConfig(shop)?.provider !== "testpay") notFound();
+  if (!isProviderEnabled("testpay", shop) || getShopPaymentConfig(shop)?.provider !== "testpay") notFound();
 
   const order = await db.order.findFirst({ where: { shopId: shop.id, provider: "testpay", providerOrderId: orderId } });
   if (!order) notFound();

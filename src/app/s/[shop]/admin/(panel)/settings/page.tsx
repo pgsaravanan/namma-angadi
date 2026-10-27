@@ -21,7 +21,7 @@ import { paiseToRupees } from "@/lib/money";
 export default async function SettingsPage() {
   const { shop } = await requireShopPermission("settings:manage");
   const storeUrl = shopBaseUrl(shop.slug, env.rootDomain, shop.customDomain);
-  const providers = enabledProviders();
+  const providers = enabledProviders(shop);
   const stored = readStoredCredentials(shop);
 
   const saved: SavedCredentials = Object.fromEntries(

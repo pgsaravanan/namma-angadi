@@ -7,7 +7,7 @@ export async function GET(_: Request, { params }: RouteContext<"/s/[shop]/pay/te
   const { orderId } = await params;
   const shop = await getRequestShop();
   const config = shop && getShopPaymentConfig(shop);
-  if (!shop || !config || config.provider !== "testpay" || !isProviderEnabled("testpay")) {
+  if (!shop || !config || config.provider !== "testpay" || !isProviderEnabled("testpay", shop)) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 

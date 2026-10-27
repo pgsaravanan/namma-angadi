@@ -10,6 +10,7 @@ import {
   encryptStoredCredentials,
   getProvider,
   isProviderEnabled,
+  usesLiveKeys,
   PaymentProviderError,
   readStoredCredentials,
 } from "@/lib/payments";
@@ -57,7 +58,7 @@ export async function savePaymentSettings(_: FormState, formData: FormData): Pro
   const { shop } = await requireShopPermission("settings:manage");
 
   const providerId = formData.get("provider");
-  if (!isProviderId(providerId) || !isProviderEnabled(providerId)) return { error: "Choose a payment provider" };
+  if (!isProviderId(providerId) || !isProviderEnabled(providerId, shop)) return { error: "Choose a payment provider" };
 
   const methods = methodsSchema.safeParse(formData.getAll("methods"));
   if (!methods.success) return { error: methods.error.issues[0]?.message };
@@ -74,6 +75,11 @@ export async function savePaymentSettings(_: FormState, formData: FormData): Pro
   const provider = getProvider(providerId);
   const invalid = provider.validateCredentials(credentials);
   if (invalid) return { error: invalid };
+  if (!shop.isLive && usesLiveKeys(providerId, credentials)) {
+    return {
+      error: "This shop is still in testing, so it can only use test keys (rzp_test_…). Live keys can be added once the shop is switched to Live.",
+    };
+  }
 
   const changed = PROVIDERS[providerId].fields.some((field) => credentials[field.name] !== previous[field.name]);
   if (changed) {

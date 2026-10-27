@@ -12,7 +12,7 @@ import { requireShop } from "@/lib/tenant";
 export async function respondToUpiRequest(providerOrderId: string, formData: FormData) {
   const shop = await requireShop();
   const config = getShopPaymentConfig(shop);
-  if (!isProviderEnabled("testpay") || config?.provider !== "testpay") notFound();
+  if (!isProviderEnabled("testpay", shop) || config?.provider !== "testpay") notFound();
 
   const order = await db.order.findFirst({ where: { shopId: shop.id, provider: "testpay", providerOrderId } });
   if (!order) notFound();

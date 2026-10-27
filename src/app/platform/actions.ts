@@ -64,6 +64,15 @@ export async function toggleShopStatus(shopId: string) {
   revalidatePath("/platform");
 }
 
+export async function toggleShopLive(shopId: string) {
+  await requirePlatformAdmin();
+  const shop = await db.shop.findUnique({ where: { id: shopId } });
+  if (!shop) return;
+  await db.shop.update({ where: { id: shop.id }, data: { isLive: !shop.isLive } });
+  revalidatePath("/platform");
+  revalidatePath("/", "layout");
+}
+
 export async function setSenderEmail(shopId: string, _: FormState, formData: FormData): Promise<FormState> {
   await requirePlatformAdmin();
   const raw = String(formData.get("senderEmail") ?? "").trim().toLowerCase();

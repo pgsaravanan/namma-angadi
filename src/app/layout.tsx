@@ -17,7 +17,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${display.variable}`}>
       <body>
-        {isTestSite && <div className="test-site-banner">Test site · no real payments, orders are not delivered</div>}
         {children}
       </body>
     </html>

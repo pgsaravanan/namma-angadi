@@ -14,13 +14,24 @@ export function getProvider(id: ProviderId) {
   return REGISTRY[id];
 }
 
-export function isProviderEnabled(id: ProviderId) {
-  const testSite = process.env.SITE_MODE === "preprod" && process.env.ENABLE_TEST_PAYMENTS === "true";
-  return !PROVIDERS[id].devOnly || !env.isProduction || testSite;
+type ModeShop = Pick<Shop, "isLive">;
+
+export function isTestSite() {
+  return process.env.SITE_MODE === "preprod";
 }
 
-export function enabledProviders() {
-  return Object.values(PROVIDERS).filter((provider) => isProviderEnabled(provider.id));
+export function isProviderEnabled(id: ProviderId, shop: ModeShop) {
+  if (!PROVIDERS[id].devOnly) return true;
+  if (shop.isLive) return false;
+  return !env.isProduction || (isTestSite() && process.env.ENABLE_TEST_PAYMENTS === "true");
+}
+
+export function enabledProviders(shop: ModeShop) {
+  return Object.values(PROVIDERS).filter((provider) => isProviderEnabled(provider.id, shop));
+}
+
+export function usesLiveKeys(id: ProviderId, credentials: Credentials) {
+  return id === "razorpay" && (credentials.keyId ?? "").startsWith("rzp_live_");
 }
 
 type StoredCredentials = Partial<Record<ProviderId, Credentials>>;
@@ -35,12 +46,13 @@ export function encryptStoredCredentials(credentials: StoredCredentials) {
 }
 
 export function getShopPaymentConfig(
-  shop: Pick<Shop, "id" | "paymentProvider" | "paymentCredentialsEnc">,
+  shop: Pick<Shop, "id" | "paymentProvider" | "paymentCredentialsEnc" | "isLive">,
 ): PaymentConfig | null {
-  if (!isProviderId(shop.paymentProvider) || !isProviderEnabled(shop.paymentProvider)) return null;
+  if (!isProviderId(shop.paymentProvider) || !isProviderEnabled(shop.paymentProvider, shop)) return null;
 
   const credentials = readStoredCredentials(shop)[shop.paymentProvider] ?? {};
   if (!getProvider(shop.paymentProvider).isConfigured(credentials)) return null;
+  if (!shop.isLive && usesLiveKeys(shop.paymentProvider, credentials)) return null;
 
   return { shopId: shop.id, provider: shop.paymentProvider, credentials };
 }

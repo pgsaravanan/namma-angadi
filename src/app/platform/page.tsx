@@ -10,7 +10,8 @@ import { shopBaseUrl } from "@/lib/host";
 import { PAID_STATUSES } from "@/lib/order-status";
 import { PROVIDERS, isProviderId } from "@/lib/payments/catalog";
 import { logoutFromPlatform } from "../login/actions";
-import { createShop, newOwnerInvite, setCustomDomain, setSenderEmail, toggleShopStatus } from "./actions";
+import { ConfirmButton } from "@/components/admin/PromotionForms";
+import { createShop, newOwnerInvite, setCustomDomain, setSenderEmail, toggleShopLive, toggleShopStatus } from "./actions";
 
 export const metadata = { title: "Platform · Namma Angadi", robots: { index: false } };
 
@@ -58,6 +59,7 @@ export default async function PlatformPage() {
                   <th>Paid orders</th>
                   <th>Custom domain</th>
                   <th>Sends email from</th>
+                  <th>Mode</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -91,6 +93,22 @@ export default async function PlatformPage() {
                       </td>
                       <td>
                         <SenderEmailForm action={setSenderEmail.bind(null, shop.id)} senderEmail={shop.senderEmail} />
+                      </td>
+                      <td>
+                        <span className={shop.isLive ? `${styles.pill} ${styles.pillLive}` : styles.pill}>
+                          {shop.isLive ? "Live" : "Testing"}
+                        </span>
+                        <ConfirmButton
+                          action={toggleShopLive.bind(null, shop.id)}
+                          message={
+                            shop.isLive
+                              ? `Put ${shop.name} back into testing? The test banner returns, Google stops listing it, and live payment keys stop working.`
+                              : `Make ${shop.name} live? The test banner goes, Google can list it, the UPI Simulator is switched off, and live payment keys are allowed.`
+                          }
+                          className={`${ui.button} ${ui.secondary} ${ui.small}`}
+                        >
+                          {shop.isLive ? "Back to testing" : "Make live"}
+                        </ConfirmButton>
                       </td>
                       <td>
                         <form action={toggleShopStatus.bind(null, shop.id)}>

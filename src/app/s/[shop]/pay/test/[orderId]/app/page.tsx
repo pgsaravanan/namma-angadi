@@ -29,7 +29,7 @@ export default async function TestUpiAppPage({ params, searchParams }: PageProps
   const { orderId } = await params;
   const { from, error } = await searchParams;
   const shop = await requireShop();
-  if (!isProviderEnabled("testpay") || getShopPaymentConfig(shop)?.provider !== "testpay") notFound();
+  if (!isProviderEnabled("testpay", shop) || getShopPaymentConfig(shop)?.provider !== "testpay") notFound();
 
   const order = await db.order.findFirst({ where: { shopId: shop.id, provider: "testpay", providerOrderId: orderId } });
   if (!order) notFound();
