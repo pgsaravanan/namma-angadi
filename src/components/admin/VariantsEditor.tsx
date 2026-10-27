@@ -5,13 +5,21 @@ import ui from "@/components/ui/ui.module.scss";
 import { packsFromStock, parsePackAmount, STOCK_UNITS, type StockUnit } from "@/lib/stock";
 import styles from "./AdminShell.module.scss";
 
-export type VariantRow = { id?: string; label: string; price: string; stock: string; packAmount: string };
+export type VariantRow = { id?: string; label: string; price: string; stock: string; packAmount: string; weight: string };
 
 export type SharedStock = { unit: StockUnit; total: number };
 
-const EMPTY_ROW: VariantRow = { label: "", price: "", stock: "10", packAmount: "" };
+const EMPTY_ROW: VariantRow = { label: "", price: "", stock: "10", packAmount: "", weight: "" };
 
-export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; shared: SharedStock | null }) {
+export function VariantsEditor({
+  initial,
+  shared,
+  askWeight,
+}: {
+  initial: VariantRow[];
+  shared: SharedStock | null;
+  askWeight: boolean;
+}) {
   const [enabled, setEnabled] = useState(initial.length > 0);
   const [rows, setRows] = useState<VariantRow[]>(initial.length ? initial : [EMPTY_ROW]);
   const [isShared, setIsShared] = useState(shared !== null);
@@ -20,6 +28,7 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
   const [total, setTotal] = useState(shared ? String(shared.total / 1000) : "");
 
   const names = STOCK_UNITS[unit];
+  const showWeight = askWeight && !(isShared && unit === "g");
   const totalBase = Math.round((Number(total) || 0) * (totalIn === "big" ? 1000 : 1));
 
   const update = (index: number, field: keyof VariantRow, value: string) =>
@@ -28,6 +37,9 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
         if (rowIndex !== index) return row;
         const next = { ...row, [field]: value };
         if (field === "label") {
+          const previousGrams = parsePackAmount(row.label, "g");
+          const grams = parsePackAmount(value, "g");
+          if (grams && (!row.weight || Number(row.weight) === previousGrams)) next.weight = String(grams);
           const previous = parsePackAmount(row.label, unit);
           const parsed = parsePackAmount(value, unit);
           if (parsed && (!row.packAmount || Number(row.packAmount) === previous)) next.packAmount = String(parsed);
@@ -105,14 +117,18 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
             </div>
           )}
 
-          <div className={styles.variantHead}>
+          <div className={showWeight ? `${styles.variantHead} ${styles.variantWide}` : styles.variantHead}>
             <span>Pack size</span>
             <span>Price (₹)</span>
             <span>{isShared ? `Pack ${names.noun} (${names.small})` : "Stock"}</span>
+            {showWeight && <span>Weight (g)</span>}
             <span />
           </div>
           {rows.map((row, index) => (
-            <div key={row.id ?? `new-${index}`} className={styles.variantRow}>
+            <div
+              key={row.id ?? `new-${index}`}
+              className={showWeight ? `${styles.variantRow} ${styles.variantWide}` : styles.variantRow}
+            >
               <input
                 className={ui.input}
                 value={row.label}
@@ -154,6 +170,17 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
                   min="0"
                   step="1"
                   aria-label={`Stock for ${row.label || "this pack"}`}
+                />
+              )}
+              {showWeight && (
+                <input
+                  className={ui.input}
+                  value={row.weight}
+                  onChange={(event) => update(index, "weight", event.target.value)}
+                  type="number"
+                  min="1"
+                  step="1"
+                  aria-label={`Weight of ${row.label || "this pack"} in grams`}
                 />
               )}
               <button

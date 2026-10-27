@@ -16,6 +16,7 @@ type Props = {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   categories: { id: string; name: string }[];
   defaultGstRate: number;
+  askWeight: boolean;
   product?: {
     name: string;
     description: string;
@@ -23,6 +24,7 @@ type Props = {
     price: string;
     stock: number;
     stockUnit: string | null;
+    weightGrams: number | null;
     isActive: boolean;
     categoryId: string | null;
     foodType: string | null;
@@ -32,7 +34,7 @@ type Props = {
   };
 };
 
-export function ProductForm({ action, categories, defaultGstRate, product }: Props) {
+export function ProductForm({ action, categories, defaultGstRate, askWeight, product }: Props) {
   const [state, formAction] = useActionState(action, undefined);
 
   return (
@@ -77,6 +79,7 @@ export function ProductForm({ action, categories, defaultGstRate, product }: Pro
       <VariantsEditor
         initial={product?.variants ?? []}
         shared={product && isStockUnit(product.stockUnit) ? { unit: product.stockUnit, total: product.stock } : null}
+        askWeight={askWeight}
       />
 
       <div className={ui.row}>
@@ -89,6 +92,19 @@ export function ProductForm({ action, categories, defaultGstRate, product }: Pro
           <span className={ui.label}>Stock</span>
           <input className={ui.input} name="stock" type="number" min="0" step="1" defaultValue={product?.stock ?? 10} />
           <span className={ui.hint}>Used when there are no pack sizes.</span>
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>Weight per item (g)</span>
+          <input
+            className={ui.input}
+            name="weightGrams"
+            type="number"
+            min="1"
+            step="1"
+            defaultValue={product?.weightGrams ?? ""}
+            placeholder={askWeight ? "Needed for the courier charge" : "Optional"}
+          />
+          <span className={ui.hint}>Used for the courier charge when there are no pack sizes.</span>
         </label>
       </div>
 

@@ -27,6 +27,7 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
         action={saveProduct.bind(null, product.id)}
         categories={categories}
         defaultGstRate={shop.defaultGstRate}
+        askWeight={shop.deliveryPerKgPaise !== null}
         product={{
           ...product,
           price: paiseToRupees(product.pricePaise),
@@ -36,6 +37,7 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
             price: paiseToRupees(variant.pricePaise),
             stock: String(variant.stock),
             packAmount: variant.packAmount ? String(variant.packAmount) : "",
+            weight: variant.weightGrams ? String(variant.weightGrams) : "",
           })),
         }}
       />

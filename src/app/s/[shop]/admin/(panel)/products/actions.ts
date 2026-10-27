@@ -18,6 +18,10 @@ const variantSchema = z.object({
   label: z.string().trim().min(1, "Give every pack size a name, e.g. 250 g").max(40),
   price: z.coerce.number().min(1, "Every pack size needs a price of at least ₹1").max(10_00_000),
   stock: z.coerce.number().int("Stock must be a whole number").min(0).max(1_000_000),
+  weight: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.coerce.number().int("Weight must be in whole grams").min(1).max(100_000).optional(),
+  ),
   packAmount: z.preprocess(
     (value) => (value === "" || value === null || value === undefined ? undefined : value),
     z.coerce.number().int("Pack weight must be a whole number").min(1).max(1_000_000).optional(),
@@ -36,6 +40,10 @@ const productSchema = z.object({
   price: z.coerce.number().min(0).max(10_00_000, "Price is too high"),
   stock: z.coerce.number().int("Stock must be a whole number").min(0).max(1_000_000),
   isActive: z.boolean(),
+  weightGrams: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.coerce.number().int("Weight must be in whole grams").min(1, "Weight must be at least 1 g").max(100_000).optional(),
+  ),
   categoryId: z.string().max(40),
   foodType: z.string().max(10),
   hsnCode: z.string().trim().regex(/^(\d{4}|\d{6}|\d{8})?$/, "HSN code should be 4, 6 or 8 digits"),
@@ -77,6 +85,7 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     price: formData.get("price") || 0,
     stock: formData.get("stock") || 0,
     isActive: formData.get("isActive") === "on",
+    weightGrams: formData.get("weightGrams") ?? "",
     categoryId: formData.get("categoryId") ?? "",
     foodType: formData.get("foodType") ?? "",
     hsnCode: formData.get("hsnCode") ?? "",
@@ -131,6 +140,7 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     pricePaise: rupeesToPaise(variant.price),
     stock: shared ? packsFromStock(shared.total, variant.packAmount ?? null) : variant.stock,
     packAmount: variant.packAmount ?? null,
+    weightGrams: variant.weight ?? null,
     position,
   }));
 
@@ -146,6 +156,7 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     pricePaise: variants.length ? Math.min(...variants.map((variant) => variant.pricePaise)) : rupeesToPaise(input.price),
     stock: shared ? shared.total : variants.length ? variants.reduce((sum, variant) => sum + variant.stock, 0) : input.stock,
     stockUnit: shared?.unit ?? null,
+    weightGrams: input.weightGrams ?? null,
   };
 
   await db.$transaction(async (tx) => {

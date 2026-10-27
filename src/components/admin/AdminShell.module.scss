@@ -753,3 +753,19 @@
     margin: 4px 0 0;
   }
 }
+
+.variantHead.variantWide,
+.variantRow.variantWide {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto;
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+}
+
+.missing {
+  margin-top: 4px;
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+}

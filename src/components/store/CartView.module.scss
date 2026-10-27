@@ -225,3 +225,10 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+.weightNote {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}

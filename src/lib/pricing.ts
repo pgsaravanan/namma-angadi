@@ -5,7 +5,7 @@ import { db } from "./db";
 import { calculateDiscount } from "./discount";
 import { formatPaise } from "./money";
 import { shopAvailability } from "./shop-hours";
-import { isStockUnit } from "./stock";
+import { chargeableKg, isStockUnit, itemWeightGrams } from "./stock";
 
 export const cartLinesSchema = z
   .array(
@@ -32,6 +32,7 @@ export type PricingShop = Pick<
   | "deliveryEnabled"
   | "pickupEnabled"
   | "deliveryFeePaise"
+  | "deliveryPerKgPaise"
   | "freeDeliveryAbovePaise"
   | "minOrderPaise"
   | "deliveryPincodes"
@@ -63,6 +64,7 @@ export type Quote = {
   discountPaise: number;
   deliveryMethod: DeliveryMethod;
   deliveryFeePaise: number;
+  deliveryWeight: { grams: number; chargedKg: number; missingWeight: boolean } | null;
   freeDeliveryAbovePaise: number | null;
   totalPaise: number;
   couponId: string | null;
@@ -108,6 +110,8 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
 
   const lines: QuoteLine[] = [];
   const problems: string[] = [];
+  let totalGrams = 0;
+  let missingWeight = false;
   const sharedLeft = new Map(products.filter((product) => isStockUnit(product.stockUnit)).map((product) => [product.id, product.stock]));
 
   for (const line of requested) {
@@ -131,6 +135,10 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
       if (packAmount) sharedLeft.set(product.id, left - Math.min(stock, line.quantity) * packAmount);
     }
     if (stock < line.quantity) problems.push(stock === 0 ? `${name} is sold out` : `Only ${stock} of ${name} left`);
+
+    const weight = itemWeightGrams(product, variant);
+    if (weight) totalGrams += weight * line.quantity;
+    else missingWeight = true;
 
     lines.push({
       productId: product.id,
@@ -184,7 +192,10 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
 
   const afterDiscount = subtotalPaise - discountPaise;
   const qualifiesForFree = shop.freeDeliveryAbovePaise !== null && afterDiscount >= shop.freeDeliveryAbovePaise;
-  const deliveryFeePaise = deliveryMethod === "delivery" && !qualifiesForFree ? shop.deliveryFeePaise : 0;
+  const byWeight = shop.deliveryPerKgPaise !== null && deliveryMethod === "delivery";
+  const chargedKg = chargeableKg(totalGrams);
+  const fullFee = byWeight ? chargedKg * shop.deliveryPerKgPaise! : shop.deliveryFeePaise;
+  const deliveryFeePaise = deliveryMethod === "delivery" && !qualifiesForFree ? fullFee : 0;
 
   return {
     lines,
@@ -193,6 +204,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
     discountPaise,
     deliveryMethod,
     deliveryFeePaise,
+    deliveryWeight: byWeight ? { grams: totalGrams, chargedKg, missingWeight } : null,
     freeDeliveryAbovePaise: deliveryMethod === "delivery" ? shop.freeDeliveryAbovePaise : null,
     totalPaise: afterDiscount + deliveryFeePaise,
     couponId,

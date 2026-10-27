@@ -51,6 +51,7 @@ model Shop {
   openDays               String     @default("mon,tue,wed,thu,fri,sat,sun")
   deliveryEnabled        Boolean    @default(true)
   deliveryFeePaise       Int        @default(0)
+  deliveryPerKgPaise     Int?
   freeDeliveryAbovePaise Int?
   minOrderPaise          Int        @default(0)
   deliveryPincodes       String?
@@ -146,6 +147,7 @@ model Product {
   pricePaise  Int
   stock       Int      @default(0)
   stockUnit   String?
+  weightGrams Int?
   isActive    Boolean  @default(true)
   foodType    String?
   hsnCode     String?
@@ -334,15 +336,16 @@ model Category {
 }
 
 model ProductVariant {
-  id         String      @id @default(cuid())
-  productId  String
-  label      String
-  pricePaise Int
-  stock      Int         @default(0)
-  packAmount Int?
-  position   Int         @default(0)
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
+  id          String      @id @default(cuid())
+  productId   String
+  label       String
+  pricePaise  Int
+  stock       Int         @default(0)
+  packAmount  Int?
+  weightGrams Int?
+  position    Int         @default(0)
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
 
   @@index([productId])
 }

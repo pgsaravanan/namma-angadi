@@ -172,7 +172,9 @@ const orderingSchema = z
     openDays: z.array(z.enum(DAY_IDS)).min(1, "Choose at least one open day"),
     deliveryEnabled: z.boolean(),
     pickupEnabled: z.boolean(),
+    deliveryMode: z.enum(["flat", "weight"]),
     deliveryFee: money,
+    deliveryPerKg: money,
     freeDeliveryAbove: money,
     minOrder: money,
     deliveryPincodes: z.string().max(2000),
@@ -180,6 +182,7 @@ const orderingSchema = z
     notifyEmail: z.union([z.email("Enter a valid email for order alerts"), z.literal("")]),
   })
   .refine((data) => data.deliveryEnabled || data.pickupEnabled, "Turn on delivery, pickup or both")
+  .refine((data) => data.deliveryMode === "flat" || Boolean(data.deliveryPerKg), "Enter the courier charge per kg")
   .refine((data) => Boolean(data.openTime) === Boolean(data.closeTime), "Enter both the opening and closing time")
   .refine((data) => !data.openTime || data.openTime < data.closeTime, "Closing time must be after opening time");
 
@@ -192,7 +195,9 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
     openDays: formData.getAll("openDays"),
     deliveryEnabled: formData.get("deliveryEnabled") === "on",
     pickupEnabled: formData.get("pickupEnabled") === "on",
+    deliveryMode: formData.get("deliveryMode") ?? "flat",
     deliveryFee: formData.get("deliveryFee"),
+    deliveryPerKg: formData.get("deliveryPerKg"),
     freeDeliveryAbove: formData.get("freeDeliveryAbove"),
     minOrder: formData.get("minOrder"),
     deliveryPincodes: formData.get("deliveryPincodes") ?? "",
@@ -215,7 +220,9 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
       openDays: data.openDays.join(","),
       deliveryEnabled: data.deliveryEnabled,
       pickupEnabled: data.pickupEnabled,
-      deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0,
+      ...(data.deliveryMode === "weight"
+        ? { deliveryPerKgPaise: rupeesToPaise(data.deliveryPerKg!) }
+        : { deliveryPerKgPaise: null, deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0 }),
       freeDeliveryAbovePaise: data.freeDeliveryAbove ? rupeesToPaise(data.freeDeliveryAbove) : null,
       minOrderPaise: data.minOrder ? rupeesToPaise(data.minOrder) : 0,
       deliveryPincodes: pincodes.length ? pincodes.join(", ") : null,

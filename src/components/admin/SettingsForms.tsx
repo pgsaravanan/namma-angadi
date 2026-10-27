@@ -255,6 +255,7 @@ type OrderingProps = {
     deliveryEnabled: boolean;
     pickupEnabled: boolean;
     deliveryFee: string;
+    deliveryPerKg: string;
     freeDeliveryAbove: string;
     minOrder: string;
     deliveryPincodes: string | null;
@@ -265,6 +266,7 @@ type OrderingProps = {
 
 export function OrderingForm({ action, shop }: OrderingProps) {
   const [state, formAction] = useActionState(action, undefined);
+  const [deliveryMode, setDeliveryMode] = useState(shop.deliveryPerKg ? "weight" : "flat");
   const openDays = shop.openDays.split(",");
 
   return (
@@ -309,9 +311,35 @@ export function OrderingForm({ action, shop }: OrderingProps) {
         </label>
         <div className={ui.row}>
           <label className={ui.field}>
-            <span className={ui.hint}>Delivery fee (₹)</span>
-            <input className={ui.input} name="deliveryFee" type="number" min="0" step="1" defaultValue={shop.deliveryFee} />
+            <span className={ui.hint}>How to charge delivery</span>
+            <select className={ui.input} name="deliveryMode" value={deliveryMode} onChange={(event) => setDeliveryMode(event.target.value)}>
+              <option value="flat">Same fee for every order</option>
+              <option value="weight">Courier charge by weight</option>
+            </select>
           </label>
+          {deliveryMode === "flat" ? (
+            <label className={ui.field}>
+              <span className={ui.hint}>Delivery fee (₹)</span>
+              <input className={ui.input} name="deliveryFee" type="number" min="0" step="1" defaultValue={shop.deliveryFee} />
+            </label>
+          ) : (
+            <label className={ui.field}>
+              <span className={ui.hint}>Courier charge per kg (₹)</span>
+              <input
+                className={ui.input}
+                name="deliveryPerKg"
+                type="number"
+                min="1"
+                step="1"
+                required
+                defaultValue={shop.deliveryPerKg}
+                placeholder="75"
+              />
+              <span className={ui.hint}>Rounded up to the next kg: 1.2 kg is charged as 2 kg.</span>
+            </label>
+          )}
+        </div>
+        <div className={ui.row}>
           <label className={ui.field}>
             <span className={ui.hint}>Free delivery above (₹)</span>
             <input

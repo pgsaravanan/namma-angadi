@@ -4,14 +4,25 @@ import ui from "@/components/ui/ui.module.scss";
 import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPaise } from "@/lib/money";
-import { formatStockAmount, isStockUnit, productStock } from "@/lib/stock";
+import { formatStockAmount, isStockUnit, itemWeightGrams, productStock } from "@/lib/stock";
+
+function hasWeight(product: {
+  weightGrams: number | null;
+  stockUnit: string | null;
+  variants: { weightGrams: number | null; packAmount: number | null; label: string }[];
+}) {
+  return product.variants.length
+    ? product.variants.every((variant) => itemWeightGrams(product, variant))
+    : Boolean(product.weightGrams);
+}
 
 export default async function ProductsPage() {
   const { shop } = await requireShopPermission("products:manage");
+  const needsWeight = (product: Parameters<typeof hasWeight>[0]) => shop.deliveryPerKgPaise !== null && !hasWeight(product);
   const products = await db.product.findMany({
     where: { shopId: shop.id },
     orderBy: { createdAt: "desc" },
-    include: { category: true, variants: { select: { stock: true, packAmount: true } } },
+    include: { category: true, variants: { select: { stock: true, packAmount: true, weightGrams: true, label: true } } },
   });
 
   return (
@@ -55,7 +66,10 @@ export default async function ProductsPage() {
                         <span className={styles.thumb} />
                       )}
                     </td>
-                    <td data-label="Name">{product.name}</td>
+                    <td data-label="Name">
+                      {product.name}
+                      {needsWeight(product) && <div className={styles.missing}>Add a weight for the courier charge</div>}
+                    </td>
                     <td data-label="Category" className={ui.muted}>{product.category?.name ?? "—"}</td>
                     <td data-label="Price">{formatPaise(product.pricePaise)}</td>
                     <td data-label="Stock">

@@ -45,3 +45,21 @@ export function parsePackAmount(label: string, unit: StockUnit) {
   const multiplier = ["kg", "kilo", "l", "ltr", "litre", "liter"].includes(suffix) ? 1000 : 1;
   return Math.round(value * multiplier) || null;
 }
+
+type WeightProduct = { weightGrams: number | null; stockUnit: string | null };
+type WeightVariant = { weightGrams: number | null; packAmount: number | null; label: string };
+
+export function itemWeightGrams(product: WeightProduct, variant?: WeightVariant | null) {
+  if (!variant) return product.weightGrams;
+  if (variant.weightGrams) return variant.weightGrams;
+  if (product.stockUnit === "g" && variant.packAmount) return variant.packAmount;
+  return parsePackAmount(variant.label, "g") ?? product.weightGrams;
+}
+
+export function chargeableKg(grams: number) {
+  return Math.max(1, Math.ceil(grams / 1000));
+}
+
+export function formatWeight(grams: number) {
+  return formatStockAmount(grams, "g");
+}

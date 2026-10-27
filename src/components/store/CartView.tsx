@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import ui from "@/components/ui/ui.module.scss";
 import { StateSelect } from "@/components/ui/StateSelect";
 import { formatPaise } from "@/lib/money";
+import { formatWeight } from "@/lib/stock";
 import type { PaymentMethod } from "@/lib/payment-methods";
 import type { DeliveryMethod, Quote } from "@/lib/pricing";
 import { MAX_QUANTITY, useCart } from "./cart-store";
@@ -288,7 +289,16 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                   <dd>− {formatPaise(quote.discountPaise)}</dd>
                 </>
               )}
-              <dt>{deliveryMethod === "pickup" ? "Pickup" : "Delivery"}</dt>
+              <dt>
+                {deliveryMethod === "pickup" ? "Pickup" : quote.deliveryWeight ? "Courier" : "Delivery"}
+                {quote.deliveryWeight && quote.deliveryWeight.grams > 0 && (
+                  <span className={styles.weightNote}>
+                    {formatWeight(quote.deliveryWeight.grams)}
+                    {quote.deliveryWeight.chargedKg * 1000 !== quote.deliveryWeight.grams &&
+                      `, charged as ${quote.deliveryWeight.chargedKg} kg`}
+                  </span>
+                )}
+              </dt>
               <dd>{quote.deliveryFeePaise ? formatPaise(quote.deliveryFeePaise) : "Free"}</dd>
               <dt className={styles.grandTotal}>Total</dt>
               <dd className={styles.grandTotal}>{formatPaise(quote.totalPaise)}</dd>

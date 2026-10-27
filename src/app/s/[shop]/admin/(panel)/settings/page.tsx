@@ -69,6 +69,7 @@ export default async function SettingsPage() {
           shop={{
             ...shop,
             deliveryFee: shop.deliveryFeePaise ? paiseToRupees(shop.deliveryFeePaise) : "",
+            deliveryPerKg: shop.deliveryPerKgPaise ? paiseToRupees(shop.deliveryPerKgPaise) : "",
             freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
             minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
           }}

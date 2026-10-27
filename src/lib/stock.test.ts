@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatStockAmount, packsFromStock, parsePackAmount, productStock, variantStock } from "./stock";
+import { chargeableKg, formatStockAmount, itemWeightGrams, packsFromStock, parsePackAmount, productStock, variantStock } from "./stock";
 
 describe("parsePackAmount", () => {
   it("reads grams and kilograms", () => {
@@ -44,5 +44,33 @@ describe("shared stock", () => {
     expect(formatStockAmount(750, "g")).toBe("750 g");
     expect(formatStockAmount(10_000, "g")).toBe("10 kg");
     expect(formatStockAmount(2500, "ml")).toBe("2.5 L");
+  });
+});
+
+describe("courier weight", () => {
+  const plain = { weightGrams: null, stockUnit: null };
+
+  it("rounds up to the next kg, with 1 kg as the minimum", () => {
+    expect(chargeableKg(0)).toBe(1);
+    expect(chargeableKg(250)).toBe(1);
+    expect(chargeableKg(1000)).toBe(1);
+    expect(chargeableKg(1001)).toBe(2);
+    expect(chargeableKg(1200)).toBe(2);
+    expect(chargeableKg(3000)).toBe(3);
+  });
+
+  it("uses a pack's own weight first", () => {
+    expect(itemWeightGrams(plain, { weightGrams: 300, packAmount: null, label: "250 g" })).toBe(300);
+  });
+
+  it("falls back to the shared-stock pack amount, then the pack name", () => {
+    expect(itemWeightGrams({ weightGrams: null, stockUnit: "g" }, { weightGrams: null, packAmount: 500, label: "Half" })).toBe(500);
+    expect(itemWeightGrams(plain, { weightGrams: null, packAmount: null, label: "1 kg" })).toBe(1000);
+    expect(itemWeightGrams(plain, { weightGrams: null, packAmount: null, label: "Small box" })).toBeNull();
+  });
+
+  it("uses the product weight when there are no pack sizes", () => {
+    expect(itemWeightGrams({ weightGrams: 400, stockUnit: null })).toBe(400);
+    expect(itemWeightGrams(plain)).toBeNull();
   });
 });
