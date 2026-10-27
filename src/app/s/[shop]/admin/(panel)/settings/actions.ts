@@ -19,6 +19,8 @@ import { INDIAN_STATES } from "@/lib/india";
 import { rupeesToPaise } from "@/lib/money";
 import { isProviderId, PROVIDERS } from "@/lib/payments/catalog";
 import { isValidTime, WEEK_DAYS } from "@/lib/shop-hours";
+import { encryptSecret } from "@/lib/crypto";
+import { sendWhatsappAlert, whatsappAlertsReady } from "@/lib/whatsapp-alerts";
 import { deleteStoredImage, ImageUploadError, resolveImageField } from "@/lib/storage";
 import { DEFAULT_SHOP_THEME, isShopTheme } from "@/lib/themes";
 
@@ -254,4 +256,40 @@ export async function saveCompliance(_: FormState, formData: FormData): Promise<
   });
   revalidatePath("/", "layout");
   return { success: "Business and tax details saved" };
+}
+
+const whatsappAlertSchema = z.object({
+  alertWhatsapp: z.union([z.string().regex(/^[6-9]\d{9}$/, "Enter the 10-digit WhatsApp number"), z.literal("")]),
+  apiKey: z.string().trim().max(64, "That key looks too long"),
+});
+
+export async function saveWhatsappAlerts(_: FormState, formData: FormData): Promise<FormState> {
+  const { shop } = await requireShopPermission("settings:manage");
+  const parsed = whatsappAlertSchema.safeParse({
+    alertWhatsapp: String(formData.get("alertWhatsapp") ?? "").trim(),
+    apiKey: formData.get("apiKey") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { alertWhatsapp, apiKey } = parsed.data;
+  const turnOff = !alertWhatsapp;
+  if (!turnOff && !apiKey && !shop.alertWhatsappKeyEnc) return { error: "Paste the API key CallMeBot sent you" };
+
+  await db.shop.update({
+    where: { id: shop.id },
+    data: turnOff
+      ? { alertWhatsapp: null, alertWhatsappKeyEnc: null }
+      : { alertWhatsapp, ...(apiKey && { alertWhatsappKeyEnc: encryptSecret(apiKey) }) },
+  });
+  revalidatePath("/admin/settings");
+  return { success: turnOff ? "WhatsApp alerts turned off" : "Saved. Send a test message to check it works." };
+}
+
+export async function sendTestWhatsapp(): Promise<FormState> {
+  const { shop } = await requireShopPermission("settings:manage");
+  if (!whatsappAlertsReady(shop)) return { error: "Save your WhatsApp number and API key first" };
+  const sent = await sendWhatsappAlert(shop, `✅ Test from ${shop.name}: WhatsApp order alerts are working.`);
+  return sent
+    ? { success: "Test sent. Check WhatsApp on that phone." }
+    : { error: "CallMeBot didn't accept it. Check the number and API key, or try again in a few minutes." };
 }

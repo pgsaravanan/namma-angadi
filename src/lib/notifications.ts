@@ -8,6 +8,7 @@ import { shopBaseUrl } from "./host";
 import { addressLines } from "./india";
 import { formatPaise } from "./money";
 import { statusLabel } from "./order-status";
+import { sendWhatsappAlert, whatsappAlertsReady } from "./whatsapp-alerts";
 
 function runLater(task: () => Promise<void>) {
   const guarded = () => task().catch((error) => console.error("Notification failed", error));
@@ -74,6 +75,19 @@ export function notifyOrderPaid(orderId: string) {
           .filter((line, index, lines) => line !== "" || lines[index - 1] !== "")
           .join("\n"),
       });
+    }
+
+    if (whatsappAlertsReady(order.shop)) {
+      await sendWhatsappAlert(
+        order.shop,
+        [
+          `*New order #${order.number} · ${formatPaise(order.totalPaise)}*`,
+          `${order.customerName} · ${order.customerPhone}`,
+          ...order.items.map((item) => `• ${item.name} × ${item.quantity}`),
+          `${order.deliveryMethod === "pickup" ? "Pickup" : "Deliver to"}: ${deliveryText(order)}`,
+          `${base}/admin/orders/${order.id}`,
+        ].join("\n"),
+      );
     }
 
     if (order.customerEmail) {

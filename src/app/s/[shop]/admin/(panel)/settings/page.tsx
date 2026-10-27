@@ -5,6 +5,7 @@ import {
   PaymentSettingsForm,
   ShopDetailsForm,
   StorefrontForm,
+  WhatsappAlertsForm,
   type SavedCredentials,
 } from "@/components/admin/SettingsForms";
 import ui from "@/components/ui/ui.module.scss";
@@ -15,7 +16,15 @@ import { parsePaymentMethods } from "@/lib/payment-methods";
 import { enabledProviders, readStoredCredentials } from "@/lib/payments";
 import { isProviderId } from "@/lib/payments/catalog";
 import { razorpayMode } from "@/lib/payments/razorpay";
-import { saveCompliance, saveOrdering, savePaymentSettings, saveShopDetails, saveStorefront } from "./actions";
+import {
+  saveCompliance,
+  saveOrdering,
+  savePaymentSettings,
+  saveShopDetails,
+  saveStorefront,
+  saveWhatsappAlerts,
+  sendTestWhatsapp,
+} from "./actions";
 import { paiseToRupees } from "@/lib/money";
 
 export default async function SettingsPage() {
@@ -63,6 +72,16 @@ export default async function SettingsPage() {
             freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
             minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
           }}
+        />
+      </section>
+
+      <section className={ui.card}>
+        <h2 className={styles.cardTitle}>WhatsApp order alerts</h2>
+        <WhatsappAlertsForm
+          save={saveWhatsappAlerts}
+          test={sendTestWhatsapp}
+          number={shop.alertWhatsapp}
+          keySaved={Boolean(shop.alertWhatsappKeyEnc)}
         />
       </section>
 

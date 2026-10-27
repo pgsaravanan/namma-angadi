@@ -420,3 +420,69 @@ export function ComplianceForm({ action, shop }: ComplianceProps) {
     </KeepForm>
   );
 }
+
+export function WhatsappAlertsForm({
+  save,
+  test,
+  number,
+  keySaved,
+}: {
+  save: Action;
+  test: () => Promise<FormState>;
+  number: string | null;
+  keySaved: boolean;
+}) {
+  const [state, saveAction] = useActionState(save, undefined);
+  const [testState, testAction] = useActionState(test, undefined);
+
+  return (
+    <div className={ui.form}>
+      <p className={ui.muted}>
+        Get each new paid order on WhatsApp too, using the free CallMeBot service. On your phone, add CallMeBot&apos;s number
+        from{" "}
+        <a href="https://www.callmebot.com/blog/free-api-whatsapp-messages/" target="_blank" rel="noopener noreferrer">
+          callmebot.com
+        </a>{" "}
+        to your contacts and send it &ldquo;I allow callmebot to send me messages&rdquo;. It replies with your API key; paste it
+        below. Your email alerts carry on as usual.
+      </p>
+      <KeepForm action={saveAction} className={ui.form}>
+        <div className={ui.row}>
+          <label className={ui.field}>
+            <span className={ui.label}>Your WhatsApp number</span>
+            <input
+              className={ui.input}
+              name="alertWhatsapp"
+              inputMode="numeric"
+              maxLength={10}
+              defaultValue={number ?? ""}
+              placeholder="10-digit mobile"
+            />
+            <span className={ui.hint}>Leave empty and save to turn WhatsApp alerts off.</span>
+          </label>
+          <label className={ui.field}>
+            <span className={ui.label}>CallMeBot API key</span>
+            <input
+              className={ui.input}
+              name="apiKey"
+              autoComplete="off"
+              placeholder={keySaved ? "Saved. Paste a new one to change it" : "e.g. 1234567"}
+            />
+          </label>
+        </div>
+        <FormMessage state={state} />
+        <div>
+          <SubmitButton>Save WhatsApp alerts</SubmitButton>
+        </div>
+      </KeepForm>
+      {number && keySaved && (
+        <KeepForm action={testAction}>
+          <FormMessage state={testState} />
+          <SubmitButton variant="secondary" pendingText="Sending…">
+            Send test message
+          </SubmitButton>
+        </KeepForm>
+      )}
+    </div>
+  );
+}
