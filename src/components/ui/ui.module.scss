@@ -207,3 +207,53 @@ textarea.input {
   justify-content: center;
   gap: 8px;
 }
+
+@media (max-width: 700px) {
+  .table:has(td[data-label]) {
+    &,
+    tbody {
+      display: block;
+    }
+
+    thead {
+      display: none;
+    }
+
+    tr {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0;
+      border: 0;
+      text-align: right;
+
+      &::before {
+        content: attr(data-label);
+        flex: none;
+        color: var(--color-text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      &[data-label=""] {
+        justify-content: flex-start;
+
+        &::before {
+          content: none;
+        }
+      }
+    }
+  }
+}

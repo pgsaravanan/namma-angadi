@@ -9,15 +9,11 @@ export type VariantRow = { id?: string; label: string; price: string; stock: str
 
 export type SharedStock = { unit: StockUnit; total: number };
 
-const EXAMPLE_ROWS: VariantRow[] = [
-  { label: "250 g", price: "", stock: "10", packAmount: "250" },
-  { label: "500 g", price: "", stock: "10", packAmount: "500" },
-  { label: "1 kg", price: "", stock: "10", packAmount: "1000" },
-];
+const EMPTY_ROW: VariantRow = { label: "", price: "", stock: "10", packAmount: "" };
 
 export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; shared: SharedStock | null }) {
   const [enabled, setEnabled] = useState(initial.length > 0);
-  const [rows, setRows] = useState<VariantRow[]>(initial.length ? initial : EXAMPLE_ROWS);
+  const [rows, setRows] = useState<VariantRow[]>(initial.length ? initial : [EMPTY_ROW]);
   const [isShared, setIsShared] = useState(shared !== null);
   const [unit, setUnit] = useState<StockUnit>(shared?.unit ?? "g");
   const [totalIn, setTotalIn] = useState<"big" | "small">("big");
@@ -162,12 +158,12 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
               )}
               <button
                 type="button"
-                className={`${ui.button} ${ui.secondary} ${ui.small}`}
+                className={`${ui.button} ${ui.danger} ${ui.small}`}
                 onClick={() => setRows((current) => current.filter((_, rowIndex) => rowIndex !== index))}
                 disabled={rows.length === 1}
-                aria-label="Remove pack size"
+                aria-label={`Remove ${row.label || "this pack size"}`}
               >
-                ×
+                Remove
               </button>
             </div>
           ))}
@@ -175,10 +171,10 @@ export function VariantsEditor({ initial, shared }: { initial: VariantRow[]; sha
             <button
               type="button"
               className={`${ui.button} ${ui.secondary} ${ui.small}`}
-              onClick={() => setRows((current) => [...current, { label: "", price: "", stock: "10", packAmount: "" }])}
+              onClick={() => setRows((current) => [...current, EMPTY_ROW])}
               disabled={rows.length >= 10}
             >
-              Add pack size
+              + Add pack size
             </button>
           </div>
         </>

@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -36,7 +37,7 @@ export function ReviewForm({
   if (state?.success) return <FormMessage state={state} />;
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <fieldset className={styles.picker}>
         <legend className={ui.label}>{question}</legend>
         <div className={styles.starInputs}>
@@ -70,6 +71,6 @@ export function ReviewForm({
       <div>
         <SubmitButton pendingText="Sending…">Send</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState, useState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -12,7 +13,7 @@ export function CouponForm({ action }: Props) {
   const [type, setType] = useState<"PERCENT" | "FLAT">("PERCENT");
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Code</span>
@@ -65,6 +66,6 @@ export function CouponForm({ action }: Props) {
       <div>
         <SubmitButton>Create coupon</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

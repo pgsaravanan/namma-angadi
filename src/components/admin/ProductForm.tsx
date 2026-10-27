@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import Link from "next/link";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
@@ -35,7 +36,7 @@ export function ProductForm({ action, categories, defaultGstRate, product }: Pro
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={`${ui.card} ${ui.form}`}>
+    <KeepForm action={formAction} className={`${ui.card} ${ui.form}`}>
       <label className={ui.field}>
         <span className={ui.label}>Name</span>
         <input className={ui.input} name="name" required defaultValue={product?.name} />
@@ -125,6 +126,6 @@ export function ProductForm({ action, categories, defaultGstRate, product }: Pro
           Cancel
         </Link>
       </div>
-    </form>
+    </KeepForm>
   );
 }

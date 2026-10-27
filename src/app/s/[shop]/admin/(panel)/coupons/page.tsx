@@ -41,25 +41,25 @@ export default async function CouponsPage() {
               <tbody>
                 {coupons.map((coupon) => (
                   <tr key={coupon.id}>
-                    <td>
+                    <td data-label="Code">
                       <strong>{coupon.code}</strong>
                     </td>
-                    <td>
+                    <td data-label="Discount">
                       {coupon.type === "PERCENT" ? `${coupon.value}%` : formatPaise(coupon.value)}
                       {coupon.maxDiscountPaise !== null && (
                         <div className={ui.muted}>up to {formatPaise(coupon.maxDiscountPaise)}</div>
                       )}
                     </td>
-                    <td>{coupon.minOrderPaise > 0 ? `Min ${formatPaise(coupon.minOrderPaise)}` : "—"}</td>
-                    <td>
+                    <td data-label="Conditions">{coupon.minOrderPaise > 0 ? `Min ${formatPaise(coupon.minOrderPaise)}` : "—"}</td>
+                    <td data-label="Used">
                       {coupon.usedCount}
                       {coupon.usageLimit !== null && ` / ${coupon.usageLimit}`}
                     </td>
-                    <td>
+                    <td data-label="Valid">
                       {coupon.startsAt ? indiaDate.format(coupon.startsAt) : "Now"} –{" "}
                       {coupon.endsAt ? indiaDate.format(coupon.endsAt) : "No end"}
                     </td>
-                    <td>
+                    <td data-label="">
                       <form action={toggleCoupon.bind(null, coupon.id)}>
                         <button type="submit" className={`${ui.button} ${ui.secondary} ${ui.small}`}>
                           {coupon.isActive ? "Turn off" : "Turn on"}

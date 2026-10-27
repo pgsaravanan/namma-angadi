@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -12,7 +13,7 @@ export function CreateShopForm({ action, rootDomain }: { action: Action; rootDom
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Shop name</span>
@@ -39,7 +40,7 @@ export function CreateShopForm({ action, rootDomain }: { action: Action; rootDom
       <div>
         <SubmitButton>Create shop</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -47,7 +48,7 @@ export function SenderEmailForm({ action, senderEmail }: { action: Action; sende
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={styles.actions}>
+    <KeepForm action={formAction} className={styles.actions}>
       <input
         className={`${ui.input} ${styles.domainInput}`}
         name="senderEmail"
@@ -60,7 +61,7 @@ export function SenderEmailForm({ action, senderEmail }: { action: Action; sende
         Save
       </SubmitButton>
       <FormMessage state={state} />
-    </form>
+    </KeepForm>
   );
 }
 
@@ -68,7 +69,7 @@ export function CustomDomainForm({ action, domain }: { action: Action; domain: s
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={styles.actions}>
+    <KeepForm action={formAction} className={styles.actions}>
       <input
         className={`${ui.input} ${styles.domainInput}`}
         name="domain"
@@ -80,6 +81,6 @@ export function CustomDomainForm({ action, domain }: { action: Action; domain: s
         Save
       </SubmitButton>
       <FormMessage state={state} />
-    </form>
+    </KeepForm>
   );
 }

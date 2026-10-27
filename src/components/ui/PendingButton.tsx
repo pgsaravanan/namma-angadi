@@ -1,7 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
-import { useFormStatus } from "react-dom";
+import { useFormSaving } from "./KeepForm";
 import ui from "./ui.module.scss";
 
 export function PendingButton({
@@ -17,7 +17,7 @@ export function PendingButton({
   disabled?: boolean;
   label?: string;
 }) {
-  const { pending } = useFormStatus();
+  const pending = useFormSaving();
   return (
     <button type="submit" className={`${className} ${ui.busy}`} disabled={pending || disabled} aria-label={label} aria-busy={pending}>
       {pending && <span className={ui.spinner} aria-hidden />}

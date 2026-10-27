@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
+import { useFormSaving } from "./KeepForm";
 import ui from "./ui.module.scss";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export function SubmitButton({ children, pendingText, variant = "primary", size = "default", block, disabled }: Props) {
-  const { pending } = useFormStatus();
+  const pending = useFormSaving();
   const className = [
     ui.button,
     variant !== "primary" && ui[variant],

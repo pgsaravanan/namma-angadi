@@ -43,17 +43,33 @@ const productSchema = z.object({
   variants: z.array(variantSchema).max(MAX_VARIANTS, `Up to ${MAX_VARIANTS} pack sizes`),
 });
 
-function parseVariants(raw: FormDataEntryValue | null) {
+type RawVariant = { label?: unknown; price?: unknown };
+
+function parseVariants(raw: FormDataEntryValue | null): RawVariant[] {
   try {
     const value = JSON.parse(String(raw ?? "[]"));
-    return Array.isArray(value) ? value : [];
+    if (!Array.isArray(value)) return [];
+    return value.filter((row: RawVariant) => String(row?.label ?? "").trim() || String(row?.price ?? "").trim());
   } catch {
     return [];
   }
 }
 
+function variantProblem(rows: RawVariant[]) {
+  for (const [index, row] of rows.entries()) {
+    const label = String(row.label ?? "").trim();
+    if (!label) return `Give pack size ${index + 1} a name, e.g. 250 g, or remove it`;
+    if (!(Number(row.price) >= 1)) return `Add a price for ${label}, or remove that pack size`;
+  }
+  return null;
+}
+
 export async function saveProduct(productId: string | null, _: FormState, formData: FormData): Promise<FormState> {
   const { shop } = await requireShopPermission("products:manage");
+
+  const rawVariants = formData.get("hasVariants") === "on" ? parseVariants(formData.get("variants")) : [];
+  const problem = variantProblem(rawVariants);
+  if (problem) return { error: problem };
 
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
@@ -65,7 +81,7 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     foodType: formData.get("foodType") ?? "",
     hsnCode: formData.get("hsnCode") ?? "",
     gstRate: formData.get("gstRate") ?? "",
-    variants: formData.get("hasVariants") === "on" ? parseVariants(formData.get("variants")) : [],
+    variants: rawVariants,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
@@ -150,5 +166,26 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
   if (existing && existing.imageUrl !== imageUrl) await deleteStoredImage(existing.imageUrl);
 
   revalidatePath("/admin/products");
+  redirect("/admin/products");
+}
+
+export async function deleteProduct(productId: string): Promise<FormState> {
+  const { shop } = await requireShopPermission("products:manage");
+  const product = await db.product.findFirst({
+    where: { id: productId, shopId: shop.id },
+    include: { _count: { select: { items: true } } },
+  });
+  if (!product) return { error: "This product no longer exists" };
+  if (product._count.items > 0) {
+    return {
+      error:
+        "This product is part of earlier orders, so it can't be deleted. Untick “Show this product in the store” and save to hide it instead.",
+    };
+  }
+
+  await db.product.delete({ where: { id: product.id } });
+  await deleteStoredImage(product.imageUrl);
+  revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
   redirect("/admin/products");
 }

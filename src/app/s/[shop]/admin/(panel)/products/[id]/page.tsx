@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import styles from "@/components/admin/AdminShell.module.scss";
+import { DeleteProduct } from "@/components/admin/DeleteProduct";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { requireShopPermission } from "@/lib/auth";
 import { listCategories } from "@/lib/categories";
 import { db } from "@/lib/db";
 import { paiseToRupees } from "@/lib/money";
-import { saveProduct } from "../actions";
+import { deleteProduct, saveProduct } from "../actions";
 
 export default async function EditProductPage({ params }: PageProps<"/s/[shop]/admin/products/[id]">) {
   const { id } = await params;
@@ -38,6 +39,7 @@ export default async function EditProductPage({ params }: PageProps<"/s/[shop]/a
           })),
         }}
       />
+      <DeleteProduct action={deleteProduct.bind(null, product.id)} name={product.name} />
     </div>
   );
 }

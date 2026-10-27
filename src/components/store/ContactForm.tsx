@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -15,7 +16,7 @@ export function ContactForm({ action }: { action: Action }) {
   if (state?.success) return <FormMessage state={state} />;
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Your name</span>
@@ -69,6 +70,6 @@ export function ContactForm({ action }: { action: Action }) {
       <div>
         <SubmitButton pendingText="Sending…">Send message</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

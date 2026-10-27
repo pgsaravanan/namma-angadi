@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -11,7 +12,7 @@ export function MemberForm({ action }: { action: Action }) {
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Name</span>
@@ -34,18 +35,18 @@ export function MemberForm({ action }: { action: Action }) {
       <div>
         <SubmitButton pendingText="Sending invite…">Send invite</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
 export function NewInviteButton({ action }: { action: () => Promise<FormState> }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction}>
+    <KeepForm action={formAction}>
       <SubmitButton variant="secondary" size="small" pendingText="Creating…">
         New invite link
       </SubmitButton>
       <FormMessage state={state} />
-    </form>
+    </KeepForm>
   );
 }

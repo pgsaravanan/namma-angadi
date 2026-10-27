@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { ImageInput } from "@/components/ui/ImageInput";
@@ -16,7 +17,7 @@ export function CategoryForm({ action, category }: Props) {
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={`${ui.form} ${styles.categoryForm}`}>
+    <KeepForm action={formAction} className={`${ui.form} ${styles.categoryForm}`}>
       <ImageInput name="image" label="Tile photo" currentUrl={category?.imageUrl} />
       <div className={ui.form}>
         <label className={ui.field}>
@@ -28,6 +29,6 @@ export function CategoryForm({ action, category }: Props) {
           <SubmitButton>{category ? "Save category" : "Add category"}</SubmitButton>
         </div>
       </div>
-    </form>
+    </KeepForm>
   );
 }

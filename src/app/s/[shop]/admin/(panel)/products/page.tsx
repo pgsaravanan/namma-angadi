@@ -47,7 +47,7 @@ export default async function ProductsPage() {
               <tbody>
                 {products.map((product) => (
                   <tr key={product.id}>
-                    <td>
+                    <td data-label="">
                       {product.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={product.imageUrl} alt="" className={styles.thumb} />
@@ -55,16 +55,16 @@ export default async function ProductsPage() {
                         <span className={styles.thumb} />
                       )}
                     </td>
-                    <td>{product.name}</td>
-                    <td className={ui.muted}>{product.category?.name ?? "—"}</td>
-                    <td>{formatPaise(product.pricePaise)}</td>
-                    <td>
+                    <td data-label="Name">{product.name}</td>
+                    <td data-label="Category" className={ui.muted}>{product.category?.name ?? "—"}</td>
+                    <td data-label="Price">{formatPaise(product.pricePaise)}</td>
+                    <td data-label="Stock">
                       {isStockUnit(product.stockUnit)
                         ? formatStockAmount(product.stock, product.stockUnit)
                         : productStock(product)}
                     </td>
-                    <td>{product.isActive ? "Yes" : "Hidden"}</td>
-                    <td>
+                    <td data-label="Visible">{product.isActive ? "Yes" : "Hidden"}</td>
+                    <td data-label="">
                       <Link href={`/admin/products/${product.id}`} className={`${ui.button} ${ui.secondary} ${ui.small}`}>
                         Edit
                       </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -11,7 +12,7 @@ type Props = { action: (state: FormState, formData: FormData) => Promise<FormSta
 export function PolicyForm({ action, title, body }: Props) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <label className={ui.field}>
         <span className={ui.label}>Title</span>
         <input className={ui.input} name="title" required defaultValue={title} />
@@ -25,6 +26,6 @@ export function PolicyForm({ action, title, body }: Props) {
       <div>
         <SubmitButton>Save</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

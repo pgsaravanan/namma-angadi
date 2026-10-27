@@ -90,8 +90,8 @@ export function ProductImport({ preview, commit }: Props) {
             <tbody>
               {previewState.rows.map((row) => (
                 <tr key={row.line}>
-                  <td className={ui.muted}>{row.line}</td>
-                  <td>
+                  <td data-label="Row" className={ui.muted}>{row.line}</td>
+                  <td data-label="">
                     {row.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={row.imageUrl} alt="" className={styles.thumb} />
@@ -99,15 +99,15 @@ export function ProductImport({ preview, commit }: Props) {
                       <span className={styles.thumb} />
                     )}
                   </td>
-                  <td>
+                  <td data-label="Name">
                     {row.name}
                     {row.category && <div className={ui.hint}>{row.category}</div>}
                     {row.description && <div className={ui.hint}>{row.description.slice(0, 80)}</div>}
                   </td>
-                  <td>{formatPaise(row.pricePaise)}</td>
-                  <td>{row.stock}</td>
-                  <td>{row.isActive ? "Yes" : "Hidden"}</td>
-                  <td>{row.existingId ? <span className={ui.hint}>Already exists</span> : "New"}</td>
+                  <td data-label="Price">{formatPaise(row.pricePaise)}</td>
+                  <td data-label="Stock">{row.stock}</td>
+                  <td data-label="Visible">{row.isActive ? "Yes" : "Hidden"}</td>
+                  <td data-label="">{row.existingId ? <span className={ui.hint}>Already exists</span> : "New"}</td>
                 </tr>
               ))}
             </tbody>

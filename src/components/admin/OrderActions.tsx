@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -24,7 +25,7 @@ type Props = {
 function ActionForm({ action, children, confirm }: { action: Action; children: React.ReactNode; confirm?: string }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form
+    <KeepForm
       action={formAction}
       className={styles.inlineForm}
       onSubmit={(event) => {
@@ -33,7 +34,7 @@ function ActionForm({ action, children, confirm }: { action: Action; children: R
     >
       {children}
       <FormMessage state={state} />
-    </form>
+    </KeepForm>
   );
 }
 

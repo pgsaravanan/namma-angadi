@@ -68,7 +68,7 @@ export default async function PlatformPage() {
                   const url = shopBaseUrl(shop.slug, env.rootDomain, shop.customDomain);
                   return (
                     <tr key={shop.id}>
-                      <td>
+                      <td data-label="Shop">
                         <strong>{shop.name}</strong>
                         <div>
                           <a href={url} target="_blank" rel="noreferrer">
@@ -77,7 +77,7 @@ export default async function PlatformPage() {
                           · <a href={`${url}/admin`}>admin</a>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Owner">
                         {shop.members[0]?.user.email ?? "—"}
                         {shop.members[0] && !shop.members[0].user.passwordSetAt && (
                           <>
@@ -86,15 +86,15 @@ export default async function PlatformPage() {
                           </>
                         )}
                       </td>
-                      <td>{isProviderId(shop.paymentProvider) ? PROVIDERS[shop.paymentProvider].label : "Not set up"}</td>
-                      <td>{shop._count.orders}</td>
-                      <td>
+                      <td data-label="Payments">{isProviderId(shop.paymentProvider) ? PROVIDERS[shop.paymentProvider].label : "Not set up"}</td>
+                      <td data-label="Paid orders">{shop._count.orders}</td>
+                      <td data-label="Custom domain">
                         <CustomDomainForm action={setCustomDomain.bind(null, shop.id)} domain={shop.customDomain} />
                       </td>
-                      <td>
+                      <td data-label="Sends email from">
                         <SenderEmailForm action={setSenderEmail.bind(null, shop.id)} senderEmail={shop.senderEmail} />
                       </td>
-                      <td>
+                      <td data-label="Mode">
                         <span className={shop.isLive ? `${styles.pill} ${styles.pillLive}` : styles.pill}>
                           {shop.isLive ? "Live" : "Testing"}
                         </span>
@@ -110,7 +110,7 @@ export default async function PlatformPage() {
                           {shop.isLive ? "Back to testing" : "Make live"}
                         </ConfirmButton>
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <form action={toggleShopStatus.bind(null, shop.id)}>
                           <button type="submit" className={`${ui.button} ${ui.secondary} ${ui.small}`}>
                             {shop.status === "ACTIVE" ? "Active · Suspend" : "Suspended · Activate"}

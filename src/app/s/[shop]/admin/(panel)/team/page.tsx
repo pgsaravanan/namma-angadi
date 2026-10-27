@@ -34,10 +34,10 @@ export default async function TeamPage() {
             <tbody>
               {members.map((member) => (
                 <tr key={member.id}>
-                  <td>{member.user.name}</td>
-                  <td>{member.user.email}</td>
-                  <td>{ROLE_LABELS[member.role]}</td>
-                  <td>
+                  <td data-label="Name">{member.user.name}</td>
+                  <td data-label="Email">{member.user.email}</td>
+                  <td data-label="Role">{ROLE_LABELS[member.role]}</td>
+                  <td data-label="Login">
                     {member.user.passwordSetAt ? (
                       <span className={ui.muted}>Active</span>
                     ) : (
@@ -47,7 +47,7 @@ export default async function TeamPage() {
                       </>
                     )}
                   </td>
-                  <td>
+                  <td data-label="">
                     {member.userId !== staff.user.id && (
                       <form action={removeMember.bind(null, member.id)}>
                         <button type="submit" className={`${ui.button} ${ui.secondary} ${ui.small}`}>

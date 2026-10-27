@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState, useState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -31,7 +32,7 @@ export function ShopDetailsForm({
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <label className={ui.field}>
         <span className={ui.label}>Shop name</span>
         <input className={ui.input} name="name" required defaultValue={shop.name} />
@@ -66,7 +67,7 @@ export function ShopDetailsForm({
       <div>
         <SubmitButton>Save details</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -117,7 +118,7 @@ export function PaymentSettingsForm({ action, providers, current, saved, webhook
   const savedForProvider = provider ? saved[provider.id] : undefined;
 
   return (
-    <form action={formAction} className={ui.form} autoComplete="off">
+    <KeepForm action={formAction} className={ui.form} autoComplete="off">
       <label className={ui.field}>
         <span className={ui.label}>Payment provider</span>
         <select
@@ -173,7 +174,7 @@ export function PaymentSettingsForm({ action, providers, current, saved, webhook
       <div>
         <SubmitButton pendingText="Checking…">Save payment settings</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -196,7 +197,7 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <ImageInput name="logo" label="Logo" currentUrl={shop.logoUrl} />
         <ImageInput name="icon" label="Browser tab icon (square)" currentUrl={shop.iconUrl} />
@@ -240,7 +241,7 @@ export function StorefrontForm({ action, shop }: StorefrontProps) {
       <div>
         <SubmitButton>Save storefront</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -267,7 +268,7 @@ export function OrderingForm({ action, shop }: OrderingProps) {
   const openDays = shop.openDays.split(",");
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <label className={ui.checkbox}>
         <input type="checkbox" name="isAcceptingOrders" defaultChecked={shop.isAcceptingOrders} />
         <strong>Accepting orders</strong> (turn off to pause the shop, e.g. on holidays)
@@ -359,7 +360,7 @@ export function OrderingForm({ action, shop }: OrderingProps) {
       <div>
         <SubmitButton>Save ordering settings</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -378,7 +379,7 @@ export function ComplianceForm({ action, shop }: ComplianceProps) {
   const [state, formAction] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Registered business name</span>
@@ -416,6 +417,6 @@ export function ComplianceForm({ action, shop }: ComplianceProps) {
       <div>
         <SubmitButton>Save business details</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

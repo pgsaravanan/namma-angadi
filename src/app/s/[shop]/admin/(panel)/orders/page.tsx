@@ -69,16 +69,16 @@ export default async function OrdersPage({ searchParams }: PageProps<"/s/[shop]/
               <tbody>
                 {orders.map((order) => (
                   <tr key={order.id}>
-                    <td>
+                    <td data-label="Order">
                       <Link href={`/admin/orders/${order.id}`}>#{order.number}</Link>
                     </td>
-                    <td>{indiaDateTime.format(order.createdAt)}</td>
-                    <td>
+                    <td data-label="Date">{indiaDateTime.format(order.createdAt)}</td>
+                    <td data-label="Customer">
                       {order.customerName}
                       <div className={ui.muted}>{order.customerPhone}</div>
                     </td>
-                    <td>{formatPaise(order.totalPaise)}</td>
-                    <td>
+                    <td data-label="Total">{formatPaise(order.totalPaise)}</td>
+                    <td data-label="Status">
                       <StatusBadge status={order.status} deliveryMethod={order.deliveryMethod} />
                       {order.attentionNote && <div className={ui.hint}>Needs attention</div>}
                     </td>

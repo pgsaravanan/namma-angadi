@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -11,7 +12,7 @@ type Action = (state: FormState, formData: FormData) => Promise<FormState>;
 export function SignInForm({ action, next }: { action: Action; next: string }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <input type="hidden" name="next" value={next} />
       <label className={ui.field}>
         <span className={ui.label}>Email</span>
@@ -25,14 +26,14 @@ export function SignInForm({ action, next }: { action: Action; next: string }) {
       <SubmitButton pendingText="Signing in…" block>
         Sign in
       </SubmitButton>
-    </form>
+    </KeepForm>
   );
 }
 
 export function RegisterForm({ action, next }: { action: Action; next: string }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <input type="hidden" name="next" value={next} />
       <label className={ui.field}>
         <span className={ui.label}>Full name</span>
@@ -54,35 +55,35 @@ export function RegisterForm({ action, next }: { action: Action; next: string })
       <SubmitButton pendingText="Creating account…" block>
         Create account
       </SubmitButton>
-    </form>
+    </KeepForm>
   );
 }
 
 export function EmailOnlyForm({ action, button }: { action: Action; button: string }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <label className={ui.field}>
         <span className={ui.label}>Email</span>
         <input className={ui.input} name="email" type="email" required autoComplete="email" />
       </label>
       <FormMessage state={state} />
       <SubmitButton block>{button}</SubmitButton>
-    </form>
+    </KeepForm>
   );
 }
 
 export function NewPasswordForm({ action }: { action: Action }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <label className={ui.field}>
         <span className={ui.label}>New password</span>
         <input className={ui.input} name="password" type="password" required minLength={8} autoComplete="new-password" />
       </label>
       <FormMessage state={state} />
       <SubmitButton block>Save new password</SubmitButton>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -99,7 +100,7 @@ type Profile = {
 export function ProfileForm({ action, profile }: { action: Action; profile: Profile }) {
   const [state, formAction] = useActionState(action, undefined);
   return (
-    <form action={formAction} className={ui.form}>
+    <KeepForm action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Full name</span>
@@ -136,6 +137,6 @@ export function ProfileForm({ action, profile }: { action: Action; profile: Prof
       <div>
         <SubmitButton>Save details</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }

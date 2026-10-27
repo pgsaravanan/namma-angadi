@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminNav, type NavItem } from "@/components/admin/AdminNav";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { NewOrderAlert } from "@/components/admin/NewOrderAlert";
 import styles from "@/components/admin/AdminShell.module.scss";
 import ui from "@/components/ui/ui.module.scss";
@@ -45,13 +46,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div>
-          <div className={styles.shopName}>{shop.name}</div>
-          <Link href="/" className={styles.storeLink} target="_blank">
-            View store ↗
-          </Link>
-        </div>
+      <AdminSidebar
+        badge={Object.values(badges).reduce((sum, count) => sum + count, 0)}
+        header={
+          <>
+            <div className={styles.shopName}>{shop.name}</div>
+            <Link href="/" className={styles.storeLink} target="_blank">
+              View store ↗
+            </Link>
+          </>
+        }
+      >
         <AdminNav items={items} />
         <div className={styles.user}>
           <div>
@@ -67,7 +72,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </button>
           </form>
         </div>
-      </aside>
+      </AdminSidebar>
       <main className={styles.content}>{children}</main>
       <NewOrderAlert initial={snapshot} />
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { KeepForm } from "@/components/ui/KeepForm";
 import { useActionState, useRef, useState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { PendingButton } from "@/components/ui/PendingButton";
@@ -20,7 +21,7 @@ export function AnnouncementForm({ action, disabled }: { action: Action; disable
   }, undefined);
 
   return (
-    <form ref={form} action={formAction} className={ui.form}>
+    <KeepForm ref={form} action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Message</span>
@@ -42,7 +43,7 @@ export function AnnouncementForm({ action, disabled }: { action: Action; disable
       <div>
         <SubmitButton disabled={disabled}>Add message</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -87,7 +88,7 @@ export function PromotionForm({
     setPicked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
 
   return (
-    <form ref={form} action={formAction} className={ui.form}>
+    <KeepForm ref={form} action={formAction} className={ui.form}>
       <div className={ui.row}>
         <label className={ui.field}>
           <span className={ui.label}>Type</span>
@@ -186,7 +187,7 @@ export function PromotionForm({
       <div>
         <SubmitButton>{initial ? "Save changes" : "Publish promotion"}</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
 
@@ -228,7 +229,7 @@ export function StoryForm({ action, initial }: { action: Action; initial?: Story
   }, undefined);
 
   return (
-    <form ref={form} action={formAction} className={ui.form}>
+    <KeepForm ref={form} action={formAction} className={ui.form}>
       <MediaInput
         key={formKey}
         name="media"
@@ -261,6 +262,6 @@ export function StoryForm({ action, initial }: { action: Action; initial?: Story
       <div>
         <SubmitButton>{initial ? "Save changes" : "Add to home page"}</SubmitButton>
       </div>
-    </form>
+    </KeepForm>
   );
 }
