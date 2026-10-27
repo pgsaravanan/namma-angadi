@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chargeableKg, formatStockAmount, itemWeightGrams, packsFromStock, parsePackAmount, productStock, variantStock } from "./stock";
+import { courierFeePaise, formatStockAmount, itemWeightGrams, packsFromStock, parsePackAmount, productStock, variantStock } from "./stock";
 
 describe("parsePackAmount", () => {
   it("reads grams and kilograms", () => {
@@ -50,13 +50,14 @@ describe("shared stock", () => {
 describe("courier weight", () => {
   const plain = { weightGrams: null, stockUnit: null };
 
-  it("rounds up to the next kg, with 1 kg as the minimum", () => {
-    expect(chargeableKg(0)).toBe(1);
-    expect(chargeableKg(250)).toBe(1);
-    expect(chargeableKg(1000)).toBe(1);
-    expect(chargeableKg(1001)).toBe(2);
-    expect(chargeableKg(1200)).toBe(2);
-    expect(chargeableKg(3000)).toBe(3);
+  it("charges in proportion to the exact weight, to the nearest rupee", () => {
+    expect(courierFeePaise(200, 7500)).toBe(1500);
+    expect(courierFeePaise(600, 7500)).toBe(4500);
+    expect(courierFeePaise(1000, 7500)).toBe(7500);
+    expect(courierFeePaise(1200, 7500)).toBe(9000);
+    expect(courierFeePaise(2400, 7500)).toBe(18000);
+    expect(courierFeePaise(250, 7500)).toBe(1900);
+    expect(courierFeePaise(0, 7500)).toBe(0);
   });
 
   it("uses a pack's own weight first", () => {

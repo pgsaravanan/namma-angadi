@@ -56,8 +56,8 @@ export function itemWeightGrams(product: WeightProduct, variant?: WeightVariant 
   return parsePackAmount(variant.label, "g") ?? product.weightGrams;
 }
 
-export function chargeableKg(grams: number) {
-  return Math.max(1, Math.ceil(grams / 1000));
+export function courierFeePaise(grams: number, perKgPaise: number) {
+  return Math.round((grams * perKgPaise) / 1000 / 100) * 100;
 }
 
 export function formatWeight(grams: number) {

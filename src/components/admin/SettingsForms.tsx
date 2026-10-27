@@ -335,7 +335,7 @@ export function OrderingForm({ action, shop }: OrderingProps) {
                 defaultValue={shop.deliveryPerKg}
                 placeholder="75"
               />
-              <span className={ui.hint}>Rounded up to the next kg: 1.2 kg is charged as 2 kg.</span>
+              <span className={ui.hint}>Charged by exact weight: at ₹75 per kg, 200 g is ₹15 and 1.2 kg is ₹90.</span>
             </label>
           )}
         </div>

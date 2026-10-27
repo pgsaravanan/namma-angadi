@@ -5,7 +5,7 @@ import { db } from "./db";
 import { calculateDiscount } from "./discount";
 import { formatPaise } from "./money";
 import { shopAvailability } from "./shop-hours";
-import { chargeableKg, isStockUnit, itemWeightGrams } from "./stock";
+import { courierFeePaise, isStockUnit, itemWeightGrams } from "./stock";
 
 export const cartLinesSchema = z
   .array(
@@ -64,7 +64,7 @@ export type Quote = {
   discountPaise: number;
   deliveryMethod: DeliveryMethod;
   deliveryFeePaise: number;
-  deliveryWeight: { grams: number; chargedKg: number; missingWeight: boolean } | null;
+  deliveryWeight: { grams: number; missingWeight: boolean } | null;
   freeDeliveryAbovePaise: number | null;
   totalPaise: number;
   couponId: string | null;
@@ -193,8 +193,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
   const afterDiscount = subtotalPaise - discountPaise;
   const qualifiesForFree = shop.freeDeliveryAbovePaise !== null && afterDiscount >= shop.freeDeliveryAbovePaise;
   const byWeight = shop.deliveryPerKgPaise !== null && deliveryMethod === "delivery";
-  const chargedKg = chargeableKg(totalGrams);
-  const fullFee = byWeight ? chargedKg * shop.deliveryPerKgPaise! : shop.deliveryFeePaise;
+  const fullFee = byWeight ? courierFeePaise(totalGrams, shop.deliveryPerKgPaise!) : shop.deliveryFeePaise;
   const deliveryFeePaise = deliveryMethod === "delivery" && !qualifiesForFree ? fullFee : 0;
 
   return {
@@ -204,7 +203,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
     discountPaise,
     deliveryMethod,
     deliveryFeePaise,
-    deliveryWeight: byWeight ? { grams: totalGrams, chargedKg, missingWeight } : null,
+    deliveryWeight: byWeight ? { grams: totalGrams, missingWeight } : null,
     freeDeliveryAbovePaise: deliveryMethod === "delivery" ? shop.freeDeliveryAbovePaise : null,
     totalPaise: afterDiscount + deliveryFeePaise,
     couponId,
