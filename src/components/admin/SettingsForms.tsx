@@ -256,6 +256,7 @@ type OrderingProps = {
     pickupEnabled: boolean;
     deliveryFee: string;
     deliveryPerKg: string;
+    minCourier: string;
     freeDeliveryAbove: string;
     minOrder: string;
     deliveryPincodes: string | null;
@@ -336,6 +337,21 @@ export function OrderingForm({ action, shop }: OrderingProps) {
                 placeholder="75"
               />
               <span className={ui.hint}>Charged by exact weight: at ₹75 per kg, 200 g is ₹15 and 1.2 kg is ₹90.</span>
+            </label>
+          )}
+          {deliveryMode === "weight" && (
+            <label className={ui.field}>
+              <span className={ui.hint}>Minimum courier charge (₹)</span>
+              <input
+                className={ui.input}
+                name="minCourier"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={shop.minCourier}
+                placeholder="No minimum"
+              />
+              <span className={ui.hint}>Charged when the weight-based charge is lower, e.g. ₹40 for a small parcel.</span>
             </label>
           )}
         </div>

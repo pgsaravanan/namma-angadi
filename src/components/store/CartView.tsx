@@ -292,7 +292,10 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
               <dt>
                 {deliveryMethod === "pickup" ? "Pickup" : quote.deliveryWeight ? "Courier" : "Delivery"}
                 {quote.deliveryWeight && quote.deliveryWeight.grams > 0 && (
-                  <span className={styles.weightNote}>{formatWeight(quote.deliveryWeight.grams)}</span>
+                  <span className={styles.weightNote}>
+                    {formatWeight(quote.deliveryWeight.grams)}
+                    {quote.deliveryWeight.minimumApplied && " · minimum charge"}
+                  </span>
                 )}
               </dt>
               <dd>{quote.deliveryFeePaise ? formatPaise(quote.deliveryFeePaise) : "Free"}</dd>

@@ -175,6 +175,7 @@ const orderingSchema = z
     deliveryMode: z.enum(["flat", "weight"]),
     deliveryFee: money,
     deliveryPerKg: money,
+    minCourier: money,
     freeDeliveryAbove: money,
     minOrder: money,
     deliveryPincodes: z.string().max(2000),
@@ -198,6 +199,7 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
     deliveryMode: formData.get("deliveryMode") ?? "flat",
     deliveryFee: formData.get("deliveryFee"),
     deliveryPerKg: formData.get("deliveryPerKg"),
+    minCourier: formData.get("minCourier"),
     freeDeliveryAbove: formData.get("freeDeliveryAbove"),
     minOrder: formData.get("minOrder"),
     deliveryPincodes: formData.get("deliveryPincodes") ?? "",
@@ -221,8 +223,15 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
       deliveryEnabled: data.deliveryEnabled,
       pickupEnabled: data.pickupEnabled,
       ...(data.deliveryMode === "weight"
-        ? { deliveryPerKgPaise: rupeesToPaise(data.deliveryPerKg!) }
-        : { deliveryPerKgPaise: null, deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0 }),
+        ? {
+            deliveryPerKgPaise: rupeesToPaise(data.deliveryPerKg!),
+            minCourierPaise: data.minCourier ? rupeesToPaise(data.minCourier) : null,
+          }
+        : {
+            deliveryPerKgPaise: null,
+            minCourierPaise: null,
+            deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0,
+          }),
       freeDeliveryAbovePaise: data.freeDeliveryAbove ? rupeesToPaise(data.freeDeliveryAbove) : null,
       minOrderPaise: data.minOrder ? rupeesToPaise(data.minOrder) : 0,
       deliveryPincodes: pincodes.length ? pincodes.join(", ") : null,

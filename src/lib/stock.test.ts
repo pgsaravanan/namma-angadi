@@ -60,6 +60,13 @@ describe("courier weight", () => {
     expect(courierFeePaise(0, 7500)).toBe(0);
   });
 
+  it("never charges less than the minimum when one is set", () => {
+    expect(courierFeePaise(100, 7500, 4000)).toBe(4000);
+    expect(courierFeePaise(1200, 7500, 4000)).toBe(9000);
+    expect(courierFeePaise(0, 7500, 4000)).toBe(4000);
+    expect(courierFeePaise(100, 7500, null)).toBe(800);
+  });
+
   it("uses a pack's own weight first", () => {
     expect(itemWeightGrams(plain, { weightGrams: 300, packAmount: null, label: "250 g" })).toBe(300);
   });

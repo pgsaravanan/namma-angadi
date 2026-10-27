@@ -33,6 +33,7 @@ export type PricingShop = Pick<
   | "pickupEnabled"
   | "deliveryFeePaise"
   | "deliveryPerKgPaise"
+  | "minCourierPaise"
   | "freeDeliveryAbovePaise"
   | "minOrderPaise"
   | "deliveryPincodes"
@@ -64,7 +65,7 @@ export type Quote = {
   discountPaise: number;
   deliveryMethod: DeliveryMethod;
   deliveryFeePaise: number;
-  deliveryWeight: { grams: number; missingWeight: boolean } | null;
+  deliveryWeight: { grams: number; missingWeight: boolean; minimumApplied: boolean } | null;
   freeDeliveryAbovePaise: number | null;
   totalPaise: number;
   couponId: string | null;
@@ -193,7 +194,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
   const afterDiscount = subtotalPaise - discountPaise;
   const qualifiesForFree = shop.freeDeliveryAbovePaise !== null && afterDiscount >= shop.freeDeliveryAbovePaise;
   const byWeight = shop.deliveryPerKgPaise !== null && deliveryMethod === "delivery";
-  const fullFee = byWeight ? courierFeePaise(totalGrams, shop.deliveryPerKgPaise!) : shop.deliveryFeePaise;
+  const fullFee = byWeight ? courierFeePaise(totalGrams, shop.deliveryPerKgPaise!, shop.minCourierPaise) : shop.deliveryFeePaise;
   const deliveryFeePaise = deliveryMethod === "delivery" && !qualifiesForFree ? fullFee : 0;
 
   return {
@@ -203,7 +204,13 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
     discountPaise,
     deliveryMethod,
     deliveryFeePaise,
-    deliveryWeight: byWeight ? { grams: totalGrams, missingWeight } : null,
+    deliveryWeight: byWeight
+      ? {
+          grams: totalGrams,
+          missingWeight,
+          minimumApplied: fullFee > courierFeePaise(totalGrams, shop.deliveryPerKgPaise!),
+        }
+      : null,
     freeDeliveryAbovePaise: deliveryMethod === "delivery" ? shop.freeDeliveryAbovePaise : null,
     totalPaise: afterDiscount + deliveryFeePaise,
     couponId,

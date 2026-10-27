@@ -70,6 +70,7 @@ export default async function SettingsPage() {
             ...shop,
             deliveryFee: shop.deliveryFeePaise ? paiseToRupees(shop.deliveryFeePaise) : "",
             deliveryPerKg: shop.deliveryPerKgPaise ? paiseToRupees(shop.deliveryPerKgPaise) : "",
+            minCourier: shop.minCourierPaise ? paiseToRupees(shop.minCourierPaise) : "",
             freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
             minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
           }}
