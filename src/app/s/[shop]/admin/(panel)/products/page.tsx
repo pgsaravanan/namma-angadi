@@ -68,7 +68,13 @@ export default async function ProductsPage() {
                     </td>
                     <td data-label="Name">
                       {product.name}
-                      {needsWeight(product) && <div className={styles.missing}>Add a weight for the courier charge</div>}
+                      {needsWeight(product) && (
+                        <div className={styles.missing}>
+                          {shop.defaultWeightGrams
+                            ? `No weight yet, so the courier charge uses the default ${shop.defaultWeightGrams} g`
+                            : "Add a weight for the courier charge"}
+                        </div>
+                      )}
                     </td>
                     <td data-label="Category" className={ui.muted}>{product.category?.name ?? "—"}</td>
                     <td data-label="Price">{formatPaise(product.pricePaise)}</td>

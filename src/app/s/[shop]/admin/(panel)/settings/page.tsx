@@ -71,6 +71,7 @@ export default async function SettingsPage() {
             deliveryFee: shop.deliveryFeePaise ? paiseToRupees(shop.deliveryFeePaise) : "",
             deliveryPerKg: shop.deliveryPerKgPaise ? paiseToRupees(shop.deliveryPerKgPaise) : "",
             minCourier: shop.minCourierPaise ? paiseToRupees(shop.minCourierPaise) : "",
+            defaultWeight: shop.defaultWeightGrams ? String(shop.defaultWeightGrams) : "",
             freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
             minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
           }}

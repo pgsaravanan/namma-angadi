@@ -176,6 +176,10 @@ const orderingSchema = z
     deliveryFee: money,
     deliveryPerKg: money,
     minCourier: money,
+    defaultWeight: z.preprocess(
+      (value) => (value === "" || value === null ? undefined : value),
+      z.coerce.number().int("Default weight must be in whole grams").min(1).max(100_000).optional(),
+    ),
     freeDeliveryAbove: money,
     minOrder: money,
     deliveryPincodes: z.string().max(2000),
@@ -200,6 +204,7 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
     deliveryFee: formData.get("deliveryFee"),
     deliveryPerKg: formData.get("deliveryPerKg"),
     minCourier: formData.get("minCourier"),
+    defaultWeight: formData.get("defaultWeight"),
     freeDeliveryAbove: formData.get("freeDeliveryAbove"),
     minOrder: formData.get("minOrder"),
     deliveryPincodes: formData.get("deliveryPincodes") ?? "",
@@ -226,10 +231,12 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
         ? {
             deliveryPerKgPaise: rupeesToPaise(data.deliveryPerKg!),
             minCourierPaise: data.minCourier ? rupeesToPaise(data.minCourier) : null,
+            defaultWeightGrams: data.defaultWeight ?? null,
           }
         : {
             deliveryPerKgPaise: null,
             minCourierPaise: null,
+            defaultWeightGrams: null,
             deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0,
           }),
       freeDeliveryAbovePaise: data.freeDeliveryAbove ? rupeesToPaise(data.freeDeliveryAbove) : null,

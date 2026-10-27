@@ -34,6 +34,7 @@ export type PricingShop = Pick<
   | "deliveryFeePaise"
   | "deliveryPerKgPaise"
   | "minCourierPaise"
+  | "defaultWeightGrams"
   | "freeDeliveryAbovePaise"
   | "minOrderPaise"
   | "deliveryPincodes"
@@ -137,7 +138,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
     }
     if (stock < line.quantity) problems.push(stock === 0 ? `${name} is sold out` : `Only ${stock} of ${name} left`);
 
-    const weight = itemWeightGrams(product, variant);
+    const weight = itemWeightGrams(product, variant) ?? shop.defaultWeightGrams;
     if (weight) totalGrams += weight * line.quantity;
     else missingWeight = true;
 

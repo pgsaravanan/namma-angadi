@@ -257,6 +257,7 @@ type OrderingProps = {
     deliveryFee: string;
     deliveryPerKg: string;
     minCourier: string;
+    defaultWeight: string;
     freeDeliveryAbove: string;
     minOrder: string;
     deliveryPincodes: string | null;
@@ -352,6 +353,21 @@ export function OrderingForm({ action, shop }: OrderingProps) {
                 placeholder="No minimum"
               />
               <span className={ui.hint}>Charged when the weight-based charge is lower, e.g. ₹40 for a small parcel.</span>
+            </label>
+          )}
+          {deliveryMode === "weight" && (
+            <label className={ui.field}>
+              <span className={ui.hint}>Default weight per item (g)</span>
+              <input
+                className={ui.input}
+                name="defaultWeight"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={shop.defaultWeight}
+                placeholder="e.g. 250"
+              />
+              <span className={ui.hint}>Used for any product or pack size that has no weight of its own.</span>
             </label>
           )}
         </div>
