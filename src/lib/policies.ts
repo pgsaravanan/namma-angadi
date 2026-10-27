@@ -113,6 +113,7 @@ export function defaultPolicy(slug: PolicySlug, shop: PolicyShop) {
         "- If you create an account, your order history and saved address are kept so you can check out faster. You can ask us to delete your account at any time.",
         "- Reviews and feedback you write, with the name you give, are shown on this shop only after we approve them. Order feedback stays private unless you tick the box to let us show it.",
         "- If you tick the box at checkout, we may message you on WhatsApp or by email after delivery to ask how you liked your order. Just tell us if you'd like us to stop.",
+        "Cookies and browser storage: we use only what is needed for the shop to work. A cookie keeps you signed in if you have an account. Your browser remembers your bag, and the delivery details you typed at checkout so you don't have to type them again; these stay on your own device. When you pay, our payment partner Razorpay sets its own cookies to process the payment securely. We do not use advertising, analytics or tracking cookies. You can clear them at any time from your browser settings.",
         `To see, correct or delete your details, contact us on ${contact}.`,
       ].join("\n\n");
   }

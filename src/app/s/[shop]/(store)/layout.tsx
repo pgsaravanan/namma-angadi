@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieNotice } from "@/components/store/CookieNotice";
 import { ScrollReveal } from "@/components/store/ScrollReveal";
 import { StoreHeader } from "@/components/store/StoreHeader";
 import { WhatsAppButton } from "@/components/store/WhatsAppButton";
@@ -44,6 +45,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       {!availability.open && <div className={styles.closedBar}>{availability.message}</div>}
       <main className={styles.main}>{children}</main>
       <ScrollReveal />
+      <CookieNotice />
       {(shop.whatsappNumber || shop.supportPhone) && (
         <WhatsAppButton number={(shop.whatsappNumber || shop.supportPhone)!} shopName={shop.name} />
       )}
