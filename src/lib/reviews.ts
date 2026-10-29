@@ -52,6 +52,9 @@ export type FeedbackInput = z.infer<typeof feedbackSchema>;
 export async function submitOrderFeedback(shopId: string, orderToken: string, input: FeedbackInput) {
   const order = await db.order.findFirst({ where: { shopId, accessToken: orderToken }, select: { id: true, status: true } });
   if (!order) throw new ReviewError("We couldn't find this order");
+  if (order.status === "REFUNDED" || order.status === "CANCELLED") {
+    throw new ReviewError(`This order was ${order.status.toLowerCase()}, so feedback is closed`);
+  }
   if (!isPaidStatus(order.status)) throw new ReviewError("You can share feedback once your order is placed");
 
   try {
