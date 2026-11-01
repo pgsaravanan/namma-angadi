@@ -56,8 +56,16 @@ export function itemWeightGrams(product: WeightProduct, variant?: WeightVariant 
   return parsePackAmount(variant.label, "g") ?? product.weightGrams;
 }
 
-export function courierFeePaise(grams: number, perKgPaise: number, minimumPaise: number | null = null) {
-  const byWeight = Math.round((grams * perKgPaise) / 1000 / 100) * 100;
+export type CourierSlab = { upToGrams: number; feePaise: number };
+
+export function courierFeePaise(
+  grams: number,
+  perKgPaise: number,
+  minimumPaise: number | null = null,
+  slabs: CourierSlab[] = [],
+) {
+  const slab = slabs.find((candidate) => grams <= candidate.upToGrams);
+  const byWeight = slab ? slab.feePaise : Math.round((grams * perKgPaise) / 1000 / 100) * 100;
   return Math.max(byWeight, minimumPaise ?? 0);
 }
 

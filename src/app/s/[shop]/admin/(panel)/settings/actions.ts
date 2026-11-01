@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { FormState } from "@/components/ui/FormMessage";
 import { requireShopPermission } from "@/lib/auth";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import {
@@ -16,7 +17,9 @@ import {
 } from "@/lib/payments";
 import { GST_RATES } from "@/lib/food";
 import { INDIAN_STATES } from "@/lib/india";
-import { rupeesToPaise } from "@/lib/money";
+import { formatPaise, rupeesToPaise } from "@/lib/money";
+import { readCourierSlabs } from "@/lib/pricing";
+import { courierFeePaise } from "@/lib/stock";
 import { isProviderId, PROVIDERS } from "@/lib/payments/catalog";
 import { isValidTime, WEEK_DAYS } from "@/lib/shop-hours";
 import { encryptSecret } from "@/lib/crypto";
@@ -180,6 +183,15 @@ const orderingSchema = z
       (value) => (value === "" || value === null ? undefined : value),
       z.coerce.number().int("Default weight must be in whole grams").min(1).max(100_000).optional(),
     ),
+    courierSlabs: z
+      .array(
+        z.object({
+          upToGrams: z.coerce.number().int("Slab weights must be in whole grams").min(1, "Slab weight must be at least 1 g").max(100_000),
+          fee: z.coerce.number().min(0).max(1_00_000),
+        }),
+      )
+      .max(6, "Use at most 6 weight slabs")
+      .refine((slabs) => new Set(slabs.map((slab) => slab.upToGrams)).size === slabs.length, "Two slabs have the same weight"),
     freeDeliveryAbove: money,
     minOrder: money,
     deliveryPincodes: z.string().max(2000),
@@ -191,8 +203,18 @@ const orderingSchema = z
   .refine((data) => Boolean(data.openTime) === Boolean(data.closeTime), "Enter both the opening and closing time")
   .refine((data) => !data.openTime || data.openTime < data.closeTime, "Closing time must be after opening time");
 
+function slabRows(formData: FormData) {
+  const grams = formData.getAll("slabGrams").map(String);
+  const fees = formData.getAll("slabFee").map(String);
+  return grams
+    .map((upToGrams, index) => ({ upToGrams: upToGrams.trim(), fee: (fees[index] ?? "").trim() }))
+    .filter((row) => row.upToGrams || row.fee);
+}
+
 export async function saveOrdering(_: FormState, formData: FormData): Promise<FormState> {
   const { shop } = await requireShopPermission("settings:manage");
+  const slabInput = slabRows(formData);
+  if (slabInput.some((row) => !row.upToGrams || !row.fee)) return { error: "Fill in both the weight and the charge for each slab" };
   const parsed = orderingSchema.safeParse({
     isAcceptingOrders: formData.get("isAcceptingOrders") === "on",
     openTime: formData.get("openTime") ?? "",
@@ -205,6 +227,7 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
     deliveryPerKg: formData.get("deliveryPerKg"),
     minCourier: formData.get("minCourier"),
     defaultWeight: formData.get("defaultWeight"),
+    courierSlabs: slabInput,
     freeDeliveryAbove: formData.get("freeDeliveryAbove"),
     minOrder: formData.get("minOrder"),
     deliveryPincodes: formData.get("deliveryPincodes") ?? "",
@@ -214,6 +237,18 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const data = parsed.data;
+  const slabs = readCourierSlabs(
+    data.courierSlabs.map((slab) => ({ upToGrams: slab.upToGrams, feePaise: rupeesToPaise(slab.fee) })),
+  );
+  if (slabs.some((slab, index) => index > 0 && slab.feePaise < slabs[index - 1].feePaise)) {
+    return { error: "Each weight slab should cost the same or more than the lighter one before it" };
+  }
+  const last = slabs.at(-1);
+  if (data.deliveryMode === "weight" && last && courierFeePaise(last.upToGrams + 1, rupeesToPaise(data.deliveryPerKg!)) < last.feePaise) {
+    return {
+      error: `At this charge per kg, a parcel just over ${last.upToGrams} g would cost less than ${formatPaise(last.feePaise)}. Raise the charge per kg.`,
+    };
+  }
   const pincodes = [...new Set(data.deliveryPincodes.split(/[\s,]+/).filter(Boolean))];
   const invalid = pincodes.find((pincode) => !/^[1-9][0-9]{5}$/.test(pincode));
   if (invalid) return { error: `"${invalid}" is not a valid PIN code` };
@@ -232,11 +267,13 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
             deliveryPerKgPaise: rupeesToPaise(data.deliveryPerKg!),
             minCourierPaise: data.minCourier ? rupeesToPaise(data.minCourier) : null,
             defaultWeightGrams: data.defaultWeight ?? null,
+            courierSlabs: slabs.length ? slabs : Prisma.DbNull,
           }
         : {
             deliveryPerKgPaise: null,
             minCourierPaise: null,
             defaultWeightGrams: null,
+            courierSlabs: Prisma.DbNull,
             deliveryFeePaise: data.deliveryFee ? rupeesToPaise(data.deliveryFee) : 0,
           }),
       freeDeliveryAbovePaise: data.freeDeliveryAbove ? rupeesToPaise(data.freeDeliveryAbove) : null,

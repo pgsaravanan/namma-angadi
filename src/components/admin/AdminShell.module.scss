@@ -769,3 +769,11 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.slabRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  max-width: 420px;
+}

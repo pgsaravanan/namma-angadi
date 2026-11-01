@@ -213,7 +213,11 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                   <div className={ui.muted}>{formatPaise(line.unitPricePaise)} each</div>
                   {line.stock === 0 ? (
                     <div className={`${styles.stockNote} ${styles.soldOut}`}>Sorry, this has just sold out. Please remove it.</div>
-                  ) : line.quantity >= line.stock ? (
+                  ) : line.quantity > line.stock ? (
+                    <div className={`${styles.stockNote} ${styles.soldOut}`}>
+                      Only {line.stock} left. Please reduce it to {line.stock}.
+                    </div>
+                  ) : line.quantity === line.stock ? (
                     <div className={styles.stockNote}>Sorry, we only have {line.stock} available</div>
                   ) : line.stock <= 5 ? (
                     <div className={styles.stockNote}>Only {line.stock} left</div>
@@ -246,6 +250,21 @@ export function CartView({ shopId, shopName, methods, acceptsPayments, paymentNo
                   </button>
                 </div>
                 <div className={styles.lineTotal}>{formatPaise(line.lineTotalPaise)}</div>
+              </li>
+            ))}
+            {quote.unavailable.map((item) => (
+              <li key={`gone:${item.productId}:${item.variantId ?? ""}`} className={styles.line}>
+                <div>
+                  <div className={styles.lineName}>{item.name ?? "An item that's no longer sold"}</div>
+                  <div className={`${styles.stockNote} ${styles.soldOut}`}>No longer available. Please remove it.</div>
+                  <button
+                    type="button"
+                    className={styles.remove}
+                    onClick={() => setQuantity(item.productId, item.variantId, 0)}
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

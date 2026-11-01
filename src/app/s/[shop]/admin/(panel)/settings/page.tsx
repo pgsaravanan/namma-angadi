@@ -26,6 +26,7 @@ import {
   sendTestWhatsapp,
 } from "./actions";
 import { paiseToRupees } from "@/lib/money";
+import { readCourierSlabs } from "@/lib/pricing";
 
 export default async function SettingsPage() {
   const { shop } = await requireShopPermission("settings:manage");
@@ -72,6 +73,10 @@ export default async function SettingsPage() {
             deliveryPerKg: shop.deliveryPerKgPaise ? paiseToRupees(shop.deliveryPerKgPaise) : "",
             minCourier: shop.minCourierPaise ? paiseToRupees(shop.minCourierPaise) : "",
             defaultWeight: shop.defaultWeightGrams ? String(shop.defaultWeightGrams) : "",
+            courierSlabs: readCourierSlabs(shop.courierSlabs).map((slab) => ({
+              upTo: String(slab.upToGrams),
+              fee: paiseToRupees(slab.feePaise),
+            })),
             freeDeliveryAbove: shop.freeDeliveryAbovePaise ? paiseToRupees(shop.freeDeliveryAbovePaise) : "",
             minOrder: shop.minOrderPaise ? paiseToRupees(shop.minOrderPaise) : "",
           }}

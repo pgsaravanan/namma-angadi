@@ -54,6 +54,7 @@ model Shop {
   deliveryPerKgPaise     Int?
   minCourierPaise        Int?
   defaultWeightGrams     Int?
+  courierSlabs           Json?
   freeDeliveryAbovePaise Int?
   minOrderPaise          Int        @default(0)
   deliveryPincodes       String?

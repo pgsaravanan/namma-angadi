@@ -67,6 +67,18 @@ describe("courier weight", () => {
     expect(courierFeePaise(100, 7500, null)).toBe(800);
   });
 
+  it("charges the first slab the weight fits in, then per kg above the last slab", () => {
+    const slabs = [
+      { upToGrams: 500, feePaise: 5000 },
+      { upToGrams: 1000, feePaise: 7000 },
+    ];
+    expect(courierFeePaise(200, 7500, null, slabs)).toBe(5000);
+    expect(courierFeePaise(500, 7500, null, slabs)).toBe(5000);
+    expect(courierFeePaise(501, 7500, null, slabs)).toBe(7000);
+    expect(courierFeePaise(1000, 7500, null, slabs)).toBe(7000);
+    expect(courierFeePaise(1200, 7500, null, slabs)).toBe(9000);
+  });
+
   it("uses a pack's own weight first", () => {
     expect(itemWeightGrams(plain, { weightGrams: 300, packAmount: null, label: "250 g" })).toBe(300);
   });

@@ -5,7 +5,7 @@ import { db } from "./db";
 import { calculateDiscount } from "./discount";
 import { formatPaise } from "./money";
 import { shopAvailability } from "./shop-hours";
-import { courierFeePaise, isStockUnit, itemWeightGrams } from "./stock";
+import { courierFeePaise, isStockUnit, itemWeightGrams, type CourierSlab } from "./stock";
 
 export const cartLinesSchema = z
   .array(
@@ -17,6 +17,13 @@ export const cartLinesSchema = z
   )
   .min(1)
   .max(50);
+
+const courierSlabsSchema = z.array(z.object({ upToGrams: z.number().int().positive(), feePaise: z.number().int().min(0) }));
+
+export function readCourierSlabs(value: unknown): CourierSlab[] {
+  const parsed = courierSlabsSchema.safeParse(value);
+  return parsed.success ? parsed.data.toSorted((a, b) => a.upToGrams - b.upToGrams) : [];
+}
 
 export const deliveryMethodSchema = z.enum(["delivery", "pickup"]);
 
@@ -35,6 +42,7 @@ export type PricingShop = Pick<
   | "deliveryPerKgPaise"
   | "minCourierPaise"
   | "defaultWeightGrams"
+  | "courierSlabs"
   | "freeDeliveryAbovePaise"
   | "minOrderPaise"
   | "deliveryPincodes"
@@ -59,8 +67,11 @@ export type QuoteLine = {
   hsnCode: string | null;
 };
 
+export type UnavailableLine = { productId: string; variantId: string | null; name: string | null };
+
 export type Quote = {
   lines: QuoteLine[];
+  unavailable: UnavailableLine[];
   problems: string[];
   subtotalPaise: number;
   discountPaise: number;
@@ -84,6 +95,10 @@ function lineKey(line: { productId: string; variantId?: string | null }) {
   return `${line.productId}:${line.variantId ?? ""}`;
 }
 
+function displayName(product: { name: string }, variant?: { label: string }) {
+  return variant ? `${product.name} (${variant.label})` : product.name;
+}
+
 function mergeLines(lines: CartLineInput[]) {
   const merged = new Map<string, CartLineInput>();
   for (const line of lines) {
@@ -105,12 +120,13 @@ export function defaultDeliveryMethod(shop: Pick<Shop, "deliveryEnabled" | "pick
 export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Client = db): Promise<Quote> {
   const requested = mergeLines(input.items);
   const products = await client.product.findMany({
-    where: { shopId: shop.id, isActive: true, id: { in: [...new Set(requested.map((line) => line.productId))] } },
+    where: { shopId: shop.id, id: { in: [...new Set(requested.map((line) => line.productId))] } },
     include: { variants: true },
   });
   const byId = new Map(products.map((product) => [product.id, product]));
 
   const lines: QuoteLine[] = [];
+  const unavailable: UnavailableLine[] = [];
   const problems: string[] = [];
   let totalGrams = 0;
   let missingWeight = false;
@@ -122,12 +138,15 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
       ? product.variants.find((candidate) => candidate.id === line.variantId)
       : undefined;
 
-    if (!product || (product.variants.length > 0 && !variant)) {
-      problems.push("An item in your bag is no longer available. Please remove it.");
+    const packGone = product && (product.variants.length > 0 ? !variant : Boolean(line.variantId));
+    if (!product || !product.isActive || packGone) {
+      const name = product ? displayName(product, variant) : null;
+      unavailable.push({ productId: line.productId, variantId: line.variantId ?? null, name });
+      problems.push(`${name ?? "An item in your bag"} is no longer available. Please remove it.`);
       continue;
     }
 
-    const name = variant ? `${product.name} (${variant.label})` : product.name;
+    const name = displayName(product, variant);
     const unitPricePaise = variant?.pricePaise ?? product.pricePaise;
     const packAmount = sharedLeft.has(product.id) ? (variant?.packAmount ?? null) : null;
     let stock = variant?.stock ?? product.stock;
@@ -136,7 +155,11 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
       stock = packAmount ? Math.floor(left / packAmount) : 0;
       if (packAmount) sharedLeft.set(product.id, left - Math.min(stock, line.quantity) * packAmount);
     }
-    if (stock < line.quantity) problems.push(stock === 0 ? `${name} is sold out` : `Only ${stock} of ${name} left`);
+    if (stock < line.quantity) {
+      problems.push(
+        stock === 0 ? `${name} is sold out. Please remove it.` : `Only ${stock} of ${name} left. Please reduce it to ${stock}.`,
+      );
+    }
 
     const weight = itemWeightGrams(product, variant) ?? shop.defaultWeightGrams;
     if (weight) totalGrams += weight * line.quantity;
@@ -195,11 +218,15 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
   const afterDiscount = subtotalPaise - discountPaise;
   const qualifiesForFree = shop.freeDeliveryAbovePaise !== null && afterDiscount >= shop.freeDeliveryAbovePaise;
   const byWeight = shop.deliveryPerKgPaise !== null && deliveryMethod === "delivery";
-  const fullFee = byWeight ? courierFeePaise(totalGrams, shop.deliveryPerKgPaise!, shop.minCourierPaise) : shop.deliveryFeePaise;
+  const slabs = readCourierSlabs(shop.courierSlabs);
+  const fullFee = byWeight
+    ? courierFeePaise(totalGrams, shop.deliveryPerKgPaise!, shop.minCourierPaise, slabs)
+    : shop.deliveryFeePaise;
   const deliveryFeePaise = deliveryMethod === "delivery" && !qualifiesForFree ? fullFee : 0;
 
   return {
     lines,
+    unavailable,
     problems,
     subtotalPaise,
     discountPaise,
@@ -209,7 +236,7 @@ export async function quoteCart(shop: PricingShop, input: QuoteInput, client: Cl
       ? {
           grams: totalGrams,
           missingWeight,
-          minimumApplied: fullFee > courierFeePaise(totalGrams, shop.deliveryPerKgPaise!),
+          minimumApplied: fullFee > courierFeePaise(totalGrams, shop.deliveryPerKgPaise!, null, slabs),
         }
       : null,
     freeDeliveryAbovePaise: deliveryMethod === "delivery" ? shop.freeDeliveryAbovePaise : null,

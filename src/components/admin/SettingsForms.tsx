@@ -258,6 +258,7 @@ type OrderingProps = {
     deliveryPerKg: string;
     minCourier: string;
     defaultWeight: string;
+    courierSlabs: SlabRow[];
     freeDeliveryAbove: string;
     minOrder: string;
     deliveryPincodes: string | null;
@@ -265,6 +266,75 @@ type OrderingProps = {
     notifyEmail: string | null;
   };
 };
+
+type SlabRow = { upTo: string; fee: string };
+
+const EMPTY_SLAB: SlabRow = { upTo: "", fee: "" };
+const MAX_SLABS = 6;
+
+function CourierSlabs({ initial }: { initial: SlabRow[] }) {
+  const [rows, setRows] = useState(initial.length ? initial : [EMPTY_SLAB]);
+  const update = (index: number, field: keyof SlabRow, value: string) =>
+    setRows((current) => current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)));
+
+  return (
+    <fieldset className={ui.form}>
+      <legend className={ui.hint}>Weight slabs (optional)</legend>
+      <div className={`${styles.slabRow} ${styles.variantHead}`}>
+        <span>Up to (g)</span>
+        <span>Charge (₹)</span>
+        <span />
+      </div>
+      {rows.map((row, index) => (
+        <div key={index} className={styles.slabRow}>
+          <input
+            className={ui.input}
+            name="slabGrams"
+            type="number"
+            min="1"
+            step="1"
+            value={row.upTo}
+            onChange={(event) => update(index, "upTo", event.target.value)}
+            placeholder={index === 0 ? "500" : "1000"}
+            aria-label="Slab weight up to, in grams"
+          />
+          <input
+            className={ui.input}
+            name="slabFee"
+            type="number"
+            min="0"
+            step="1"
+            value={row.fee}
+            onChange={(event) => update(index, "fee", event.target.value)}
+            placeholder={index === 0 ? "50" : "70"}
+            aria-label="Courier charge for this slab, in rupees"
+          />
+          <button
+            type="button"
+            className={`${ui.button} ${ui.danger} ${ui.small}`}
+            onClick={() => setRows((current) => (current.length === 1 ? [EMPTY_SLAB] : current.filter((_, rowIndex) => rowIndex !== index)))}
+            aria-label="Remove this slab"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <div>
+        <button
+          type="button"
+          className={`${ui.button} ${ui.secondary} ${ui.small}`}
+          onClick={() => setRows((current) => [...current, EMPTY_SLAB])}
+          disabled={rows.length >= MAX_SLABS}
+        >
+          + Add slab
+        </button>
+      </div>
+      <span className={ui.hint}>
+        E.g. up to 500 g ₹50, up to 1000 g ₹70. Parcels heavier than the last slab use the charge per kg.
+      </span>
+    </fieldset>
+  );
+}
 
 export function OrderingForm({ action, shop }: OrderingProps) {
   const [state, formAction] = useActionState(action, undefined);
@@ -337,7 +407,9 @@ export function OrderingForm({ action, shop }: OrderingProps) {
                 defaultValue={shop.deliveryPerKg}
                 placeholder="75"
               />
-              <span className={ui.hint}>Charged by exact weight: at ₹75 per kg, 200 g is ₹15 and 1.2 kg is ₹90.</span>
+              <span className={ui.hint}>
+                Charged by exact weight: at ₹75 per kg, 200 g is ₹15 and 1.2 kg is ₹90. With slabs, only above the last slab.
+              </span>
             </label>
           )}
           {deliveryMode === "weight" && (
@@ -371,6 +443,7 @@ export function OrderingForm({ action, shop }: OrderingProps) {
             </label>
           )}
         </div>
+        {deliveryMode === "weight" && <CourierSlabs initial={shop.courierSlabs} />}
         <div className={ui.row}>
           <label className={ui.field}>
             <span className={ui.hint}>Free delivery above (₹)</span>
