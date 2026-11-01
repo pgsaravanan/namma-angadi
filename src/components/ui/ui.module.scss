@@ -133,6 +133,14 @@ textarea.input {
   color: var(--color-success);
 }
 
+.warning {
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

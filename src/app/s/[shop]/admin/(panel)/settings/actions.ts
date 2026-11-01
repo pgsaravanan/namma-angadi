@@ -19,7 +19,7 @@ import { GST_RATES } from "@/lib/food";
 import { INDIAN_STATES } from "@/lib/india";
 import { formatPaise, rupeesToPaise } from "@/lib/money";
 import { readCourierSlabs } from "@/lib/pricing";
-import { courierFeePaise } from "@/lib/stock";
+import { courierFeePaise, type CourierSlab } from "@/lib/stock";
 import { isProviderId, PROVIDERS } from "@/lib/payments/catalog";
 import { isValidTime, WEEK_DAYS } from "@/lib/shop-hours";
 import { encryptSecret } from "@/lib/crypto";
@@ -203,6 +203,20 @@ const orderingSchema = z
   .refine((data) => Boolean(data.openTime) === Boolean(data.closeTime), "Enter both the opening and closing time")
   .refine((data) => !data.openTime || data.openTime < data.closeTime, "Closing time must be after opening time");
 
+function slabWarning(slabs: CourierSlab[], perKgPaise: number) {
+  const cheaper = slabs.findIndex((slab, index) => index > 0 && slab.feePaise < slabs[index - 1].feePaise);
+  if (cheaper > 0) {
+    const [lighter, heavier] = [slabs[cheaper - 1], slabs[cheaper]];
+    return `Please check: up to ${heavier.upToGrams} g costs ${formatPaise(heavier.feePaise)}, less than up to ${lighter.upToGrams} g at ${formatPaise(lighter.feePaise)}.`;
+  }
+  const last = slabs.at(-1);
+  if (!last) return;
+  const justOver = courierFeePaise(last.upToGrams + 1, perKgPaise);
+  if (justOver < last.feePaise) {
+    return `Please check: parcels over ${last.upToGrams} g use ${formatPaise(perKgPaise)} per kg, so a parcel just over ${last.upToGrams} g costs ${formatPaise(justOver)}, less than your ${formatPaise(last.feePaise)} slab. Add a heavier slab (e.g. up to 1000 g) or raise the charge per kg.`;
+  }
+}
+
 function slabRows(formData: FormData) {
   const grams = formData.getAll("slabGrams").map(String);
   const fees = formData.getAll("slabFee").map(String);
@@ -240,15 +254,7 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
   const slabs = readCourierSlabs(
     data.courierSlabs.map((slab) => ({ upToGrams: slab.upToGrams, feePaise: rupeesToPaise(slab.fee) })),
   );
-  if (slabs.some((slab, index) => index > 0 && slab.feePaise < slabs[index - 1].feePaise)) {
-    return { error: "Each weight slab should cost the same or more than the lighter one before it" };
-  }
-  const last = slabs.at(-1);
-  if (data.deliveryMode === "weight" && last && courierFeePaise(last.upToGrams + 1, rupeesToPaise(data.deliveryPerKg!)) < last.feePaise) {
-    return {
-      error: `At this charge per kg, a parcel just over ${last.upToGrams} g would cost less than ${formatPaise(last.feePaise)}. Raise the charge per kg.`,
-    };
-  }
+  const warning = data.deliveryMode === "weight" ? slabWarning(slabs, rupeesToPaise(data.deliveryPerKg!)) : undefined;
   const pincodes = [...new Set(data.deliveryPincodes.split(/[\s,]+/).filter(Boolean))];
   const invalid = pincodes.find((pincode) => !/^[1-9][0-9]{5}$/.test(pincode));
   if (invalid) return { error: `"${invalid}" is not a valid PIN code` };
@@ -284,7 +290,7 @@ export async function saveOrdering(_: FormState, formData: FormData): Promise<Fo
     },
   });
   revalidatePath("/", "layout");
-  return { success: "Ordering and delivery settings saved" };
+  return { success: "Ordering and delivery settings saved", warning };
 }
 
 const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;

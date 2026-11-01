@@ -1,7 +1,7 @@
 import { CopyLink } from "./CopyLink";
 import ui from "./ui.module.scss";
 
-export type FormState = { error?: string; success?: string; link?: string } | undefined;
+export type FormState = { error?: string; success?: string; warning?: string; link?: string } | undefined;
 
 export function FormMessage({ state }: { state: FormState }) {
   if (state?.error) return <p role="alert" className={`${ui.message} ${ui.error}`}>{state.error}</p>;
@@ -10,6 +10,7 @@ export function FormMessage({ state }: { state: FormState }) {
       <div role="status" className={`${ui.message} ${ui.success}`}>
         <p className={ui.flush}>{state.success}</p>
         {state.link && <CopyLink link={state.link} />}
+        {state.warning && <p className={`${ui.flush} ${ui.warning}`}>{state.warning}</p>}
       </div>
     );
   }
