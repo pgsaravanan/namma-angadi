@@ -8,7 +8,7 @@ import { requireShopPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { GST_RATES, isFoodType } from "@/lib/food";
 import { rupeesToPaise } from "@/lib/money";
-import { isStockUnit, packsFromStock } from "@/lib/stock";
+import { isStockUnit, packsFromStock, parsePackAmount, STOCK_UNITS, type StockUnit } from "@/lib/stock";
 import { deleteStoredImage, ImageUploadError, resolveImageField } from "@/lib/storage";
 
 const MAX_VARIANTS = 10;
@@ -108,6 +108,16 @@ export async function saveProduct(productId: string | null, _: FormState, formDa
     const missing = input.variants.find((variant) => !variant.packAmount);
     if (missing) return { error: `Enter how much is in each pack (${missing.label})` };
     const { unit, total, totalIn } = sharedParsed.data;
+    const unitName = STOCK_UNITS[unit as StockUnit].small;
+    const mismatch = input.variants.find((variant) => {
+      const fromLabel = parsePackAmount(variant.label, unit as StockUnit);
+      return fromLabel !== null && fromLabel !== variant.packAmount;
+    });
+    if (mismatch) {
+      return {
+        error: `"${mismatch.label}" should hold ${parsePackAmount(mismatch.label, unit as StockUnit)} ${unitName}, but its pack size says ${mismatch.packAmount} ${unitName}. That box is how much one pack holds, not how many packs you have. Put how much you have in Total stock.`,
+      };
+    }
     shared = { unit, total: Math.round(total * (totalIn === "big" ? 1000 : 1)) };
   }
   if (!input.variants.length && input.price < 1) return { error: "Price must be at least ₹1" };

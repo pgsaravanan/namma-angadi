@@ -2,7 +2,7 @@
 
 import { KeepForm } from "@/components/ui/KeepForm";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { FormMessage, type FormState } from "@/components/ui/FormMessage";
 import { ImageInput } from "@/components/ui/ImageInput";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -36,6 +36,7 @@ type Props = {
 
 export function ProductForm({ action, categories, defaultGstRate, askWeight, product }: Props) {
   const [state, formAction] = useActionState(action, undefined);
+  const [hasSizes, setHasSizes] = useState(Boolean(product?.variants.length));
 
   return (
     <KeepForm action={formAction} className={`${ui.card} ${ui.form}`}>
@@ -80,33 +81,45 @@ export function ProductForm({ action, categories, defaultGstRate, askWeight, pro
         initial={product?.variants ?? []}
         shared={product && isStockUnit(product.stockUnit) ? { unit: product.stockUnit, total: product.stock } : null}
         askWeight={askWeight}
+        enabled={hasSizes}
+        onEnabledChange={setHasSizes}
       />
 
-      <div className={ui.row}>
-        <label className={ui.field}>
-          <span className={ui.label}>Price (₹)</span>
-          <input className={ui.input} name="price" type="number" min="0" step="0.01" defaultValue={product?.price} />
-          <span className={ui.hint}>Used when there are no pack sizes.</span>
-        </label>
-        <label className={ui.field}>
-          <span className={ui.label}>Stock</span>
-          <input className={ui.input} name="stock" type="number" min="0" step="1" defaultValue={product?.stock ?? 10} />
-          <span className={ui.hint}>Used when there are no pack sizes.</span>
-        </label>
-        <label className={ui.field}>
-          <span className={ui.label}>Weight per item (g)</span>
-          <input
-            className={ui.input}
-            name="weightGrams"
-            type="number"
-            min="1"
-            step="1"
-            defaultValue={product?.weightGrams ?? ""}
-            placeholder={askWeight ? "Needed for the courier charge" : "Optional"}
-          />
-          <span className={ui.hint}>Used for the courier charge when there are no pack sizes.</span>
-        </label>
-      </div>
+      {!hasSizes && (
+        <div className={ui.row}>
+          <label className={ui.field}>
+            <span className={ui.label}>Price (₹)</span>
+            <input className={ui.input} name="price" type="number" min="0" step="0.01" defaultValue={product?.price} />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.label}>Stock</span>
+            <input
+              className={ui.input}
+              name="stock"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={product && isStockUnit(product.stockUnit) ? "" : (product?.stock ?? 10)}
+              placeholder="e.g. 5"
+              required
+            />
+            <span className={ui.hint}>How many you have to sell.</span>
+          </label>
+          <label className={ui.field}>
+            <span className={ui.label}>Weight per item (g)</span>
+            <input
+              className={ui.input}
+              name="weightGrams"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={product?.weightGrams ?? (product?.variants.length === 1 ? product.variants[0].weight : "")}
+              placeholder={askWeight ? "Needed for the courier charge" : "Optional"}
+            />
+            <span className={ui.hint}>Used for the courier charge.</span>
+          </label>
+        </div>
+      )}
 
       <ImageInput name="photo" label="Photo" currentUrl={product?.imageUrl} allowLink pasteAnywhere />
 

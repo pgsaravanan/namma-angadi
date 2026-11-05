@@ -15,12 +15,15 @@ export function VariantsEditor({
   initial,
   shared,
   askWeight,
+  enabled,
+  onEnabledChange,
 }: {
   initial: VariantRow[];
   shared: SharedStock | null;
   askWeight: boolean;
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
 }) {
-  const [enabled, setEnabled] = useState(initial.length > 0);
   const [rows, setRows] = useState<VariantRow[]>(initial.length ? initial : [EMPTY_ROW]);
   const [isShared, setIsShared] = useState(shared !== null);
   const [unit, setUnit] = useState<StockUnit>(shared?.unit ?? "g");
@@ -58,7 +61,7 @@ export function VariantsEditor({
   return (
     <fieldset className={ui.form}>
       <label className={ui.checkbox}>
-        <input type="checkbox" name="hasVariants" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+        <input type="checkbox" name="hasVariants" checked={enabled} onChange={(event) => onEnabledChange(event.target.checked)} />
         This product comes in different pack sizes (e.g. 250 g, 500 g, 1 kg)
       </label>
       {enabled && (
@@ -120,7 +123,7 @@ export function VariantsEditor({
           <div className={showWeight ? `${styles.variantHead} ${styles.variantWide}` : styles.variantHead}>
             <span>Pack size</span>
             <span>Price (₹)</span>
-            <span>{isShared ? `Pack ${names.noun} (${names.small})` : "Stock"}</span>
+            <span>{isShared ? `One pack holds (${names.small})` : "Packs in stock"}</span>
             {showWeight && <span>Weight (g)</span>}
             <span />
           </div>
