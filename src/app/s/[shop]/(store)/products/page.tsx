@@ -1,6 +1,10 @@
+import Form from "next/form";
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductGrid } from "@/components/store/ProductCard";
+import { PageLoading } from "@/components/ui/PageLoading";
+import { PendingButton, PendingLink } from "@/components/ui/PendingButton";
 import ui from "@/components/ui/ui.module.scss";
 import { listCategories } from "@/lib/categories";
 import { db } from "@/lib/db";
@@ -22,31 +26,47 @@ function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
 }
 
+async function ProductResults({ shopId, categoryId, query, sortKey }: { shopId: string; categoryId?: string; query: string; sortKey: string }) {
+  await releaseExpiredOrders(shopId);
+  const needle = query.toLowerCase();
+  const found = await db.product.findMany({
+    where: { shopId, isActive: true, ...(categoryId && { categoryId }) },
+    orderBy: (SORTS[sortKey] ?? SORTS.new).orderBy,
+    include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
+  });
+  const products = await withRatings(
+    shopId,
+    found.filter(
+      (product) =>
+        !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),
+    ),
+  );
+
+  return (
+    <>
+      <p className={styles.resultCount}>
+        {products.length} product{products.length === 1 ? "" : "s"}
+      </p>
+      {products.length ? (
+        <ProductGrid products={products} />
+      ) : (
+        <p className={ui.empty}>
+          Nothing found. <Link href="/products">See all products</Link>
+        </p>
+      )}
+    </>
+  );
+}
+
 export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop]/products">) {
   const shop = await requireShop();
   const params = await searchParams;
   const categoryId = one(params.category);
   const query = one(params.q)?.trim().slice(0, 80) ?? "";
   const sortKey = one(params.sort) ?? "new";
-  const sort = SORTS[sortKey] ?? SORTS.new;
-
-  await releaseExpiredOrders(shop.id);
+  
   const categories = await listCategories(shop.id);
   const category = categories.find((candidate) => candidate.id === categoryId);
-
-  const needle = query.toLowerCase();
-  const found = await db.product.findMany({
-    where: { shopId: shop.id, isActive: true, ...(category && { categoryId: category.id }) },
-    orderBy: sort.orderBy,
-    include: { variants: { select: { pricePaise: true, stock: true, packAmount: true } } },
-  });
-  const products = await withRatings(
-    shop.id,
-    found.filter(
-      (product) =>
-        !needle || product.name.toLowerCase().includes(needle) || product.description.toLowerCase().includes(needle),
-    ),
-  );
 
   const linkFor = (nextCategory?: string) => {
     const search = new URLSearchParams();
@@ -63,20 +83,20 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
 
       <div className={styles.filters}>
         <nav className={styles.chips} aria-label="Categories">
-          <Link href={linkFor()} className={`${styles.chip} ${!category ? styles.chipActive : ""}`}>
+          <PendingLink href={linkFor()} className={`${styles.chip} ${!category ? styles.chipActive : ""}`}>
             All
-          </Link>
+          </PendingLink>
           {categories.map((candidate) => (
-            <Link
+            <PendingLink
               key={candidate.id}
               href={linkFor(candidate.id)}
               className={`${styles.chip} ${candidate.id === category?.id ? styles.chipActive : ""}`}
             >
               {candidate.name}
-            </Link>
+            </PendingLink>
           ))}
         </nav>
-        <form className={styles.searchForm} action="/products">
+        <Form className={styles.searchForm} action="/products">
           {category && <input type="hidden" name="category" value={category.id} />}
           <input className={ui.input} type="search" name="q" defaultValue={query} placeholder="Search products" aria-label="Search products" />
           <select className={ui.input} name="sort" defaultValue={sortKey} aria-label="Sort by">
@@ -86,22 +106,13 @@ export default async function ProductsPage({ searchParams }: PageProps<"/s/[shop
               </option>
             ))}
           </select>
-          <button type="submit" className={`${ui.button} ${ui.secondary}`}>
-            Apply
-          </button>
-        </form>
+          <PendingButton className={`${ui.button} ${ui.secondary}`}>Apply</PendingButton>
+        </Form>
       </div>
 
-      <p className={styles.resultCount}>
-        {products.length} product{products.length === 1 ? "" : "s"}
-      </p>
-      {products.length ? (
-        <ProductGrid products={products} />
-      ) : (
-        <p className={ui.empty}>
-          Nothing found. <Link href="/products">See all products</Link>
-        </p>
-      )}
+      <Suspense key={`${category?.id ?? ""}|${query}|${sortKey}`} fallback={<PageLoading />}>
+        <ProductResults shopId={shop.id} categoryId={category?.id} query={query} sortKey={sortKey} />
+      </Suspense>
     </div>
   );
 }
