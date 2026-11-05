@@ -1,8 +1,8 @@
-import { TickerTrack } from "./SpotlightParts";
 import styles from "./CustomerStories.module.scss";
-import { FramedMedia, type MediaPlaceholder } from "./FramedMedia";
+import type { MediaPlaceholder } from "./FramedMedia";
+import { StoryCards, type Story } from "./StoryCards";
 
-export type Story = { id: string; caption: string; customerName: string | null; place: string | null; mediaUrl: string | null };
+export type { Story };
 
 export function CustomerStories({ stories, placeholder }: { stories: Story[]; placeholder: MediaPlaceholder }) {
   return (
@@ -13,23 +13,7 @@ export function CustomerStories({ stories, placeholder }: { stories: Story[]; pl
           From our happy customers
         </h2>
       </div>
-      <TickerTrack axis="x" className={styles.track}>
-        {stories.map((story) => (
-          <figure key={story.id} className={styles.card}>
-            <FramedMedia url={story.mediaUrl} className={styles.mediaWrap} placeholder={placeholder} />
-            <figcaption className={styles.caption}>
-              <p>{story.caption}</p>
-              {(story.customerName || story.place) && (
-                <span className={styles.who}>
-                  {story.customerName && <strong>{story.customerName}</strong>}
-                  {story.customerName && story.place && " · "}
-                  {story.place}
-                </span>
-              )}
-            </figcaption>
-          </figure>
-        ))}
-      </TickerTrack>
+      <StoryCards stories={stories} placeholder={placeholder} />
     </section>
   );
 }

@@ -55,7 +55,13 @@
   display: flex;
   flex-direction: column;
   margin: 0;
+  padding: 0;
   overflow: hidden;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: 0 14px 32px -22px rgb(0 0 0 / 45%);
@@ -75,17 +81,96 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px 16px 16px;
+}
 
-  p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
-  }
+.text {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .who {
   color: var(--color-text-muted);
   font-size: 13px;
+}
+
+.viewer {
+  width: min(92vw, 640px);
+  max-height: 92dvh;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgb(0 0 0 / 60%);
+  }
+}
+
+.viewerBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.viewerClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+
+.viewerCloseIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.viewerMedia {
+  display: flex;
+  justify-content: center;
+  background: var(--color-surface-muted);
+
+  img,
+  video {
+    height: auto;
+    max-height: min(62dvh, 560px);
+  }
+}
+
+.viewerCaption {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px 22px;
+
+  p {
+    margin: 0;
+    padding-right: 40px;
+    font-size: 17px;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+
+  .who {
+    font-size: 15px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
