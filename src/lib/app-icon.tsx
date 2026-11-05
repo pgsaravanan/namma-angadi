@@ -1,4 +1,5 @@
 import "server-only";
+import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { readStoredImage } from "./storage";
 import { shopThemeColors } from "./themes";
@@ -38,7 +39,34 @@ export function letterIconSvg(shop: Pick<IconShop, "name" | "theme">) {
 async function sourceImage(shop: IconShop) {
   const key = shop.iconUrl?.startsWith("/media/") ? shop.iconUrl.slice("/media/".length) : null;
   const stored = key ? await readStoredImage(shop.id, key) : null;
-  return stored ?? Buffer.from(letterIconSvg(shop));
+  return stored ?? letterIconPng(shop);
+}
+
+async function letterIconPng(shop: IconShop) {
+  const { color, background } = shopThemeColors(shop.theme);
+  const letter = shop.name.trim().charAt(0).toUpperCase() || "S";
+  const image = new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 112,
+          background: color,
+          color: background,
+          fontSize: 288,
+          fontWeight: 700,
+        }}
+      >
+        {letter}
+      </div>
+    ),
+    { width: 512, height: 512 },
+  );
+  return Buffer.from(await image.arrayBuffer());
 }
 
 export async function appIconPng(shop: IconShop, variant: AppIconVariant) {
