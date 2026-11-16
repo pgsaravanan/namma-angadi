@@ -98,7 +98,7 @@ export function VariantsEditor({
               </label>
               <label className={ui.field}>
                 <span className={ui.label}>Total stock</span>
-                <div className={styles.inlineForm}>
+                <div className={styles.amountWithUnit}>
                   <input
                     className={ui.input}
                     name="totalStock"
@@ -125,6 +125,11 @@ export function VariantsEditor({
             </div>
           )}
 
+          {!isShared && (
+            <span className={ui.hint}>
+              Type the size with its unit, like 250 g or 1 kg. Tick &ldquo;one stock&rdquo; if you sell from a bigger quantity.
+            </span>
+          )}
           <div className={showWeight ? `${styles.variantHead} ${styles.variantWide}` : styles.variantHead}>
             <span>Pack size</span>
             <span>Price (₹)</span>
