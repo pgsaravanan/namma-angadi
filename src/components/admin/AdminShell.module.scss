@@ -272,6 +272,35 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
+
+  @media (max-width: 600px) {
+    display: none;
+  }
+}
+
+.variantField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.variantCaption {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+
+  @media (max-width: 600px) {
+    display: block;
+  }
+}
+
+.packFromLabel {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  font-weight: 600;
 }
 
 .moreOptions {

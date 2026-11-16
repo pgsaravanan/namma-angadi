@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import ui from "@/components/ui/ui.module.scss";
-import { packsFromStock, parsePackAmount, STOCK_UNITS, type StockUnit } from "@/lib/stock";
+import { formatStockAmount, packsFromStock, parsePackAmount, STOCK_UNITS, type StockUnit } from "@/lib/stock";
 import styles from "./AdminShell.module.scss";
 
 export type VariantRow = { id?: string; label: string; price: string; stock: string; packAmount: string; weight: string };
 
 export type SharedStock = { unit: StockUnit; total: number };
+
+const packsLeft = (count: number) => `${count} pack${count === 1 ? "" : "s"} available`;
 
 const EMPTY_ROW: VariantRow = { label: "", price: "", stock: "10", packAmount: "", weight: "" };
 
@@ -24,7 +26,11 @@ export function VariantsEditor({
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
 }) {
-  const [rows, setRows] = useState<VariantRow[]>(initial.length ? initial : [EMPTY_ROW]);
+  const [rows, setRows] = useState<VariantRow[]>(() =>
+    initial.length
+      ? initial.map((row) => (shared ? { ...row, packAmount: String(parsePackAmount(row.label, shared.unit) ?? row.packAmount) } : row))
+      : [EMPTY_ROW],
+  );
   const [isShared, setIsShared] = useState(shared !== null);
   const [unit, setUnit] = useState<StockUnit>(shared?.unit ?? "g");
   const [totalIn, setTotalIn] = useState<"big" | "small">("big");
@@ -43,9 +49,8 @@ export function VariantsEditor({
           const previousGrams = parsePackAmount(row.label, "g");
           const grams = parsePackAmount(value, "g");
           if (grams && (!row.weight || Number(row.weight) === previousGrams)) next.weight = String(grams);
-          const previous = parsePackAmount(row.label, unit);
           const parsed = parsePackAmount(value, unit);
-          if (parsed && (!row.packAmount || Number(row.packAmount) === previous)) next.packAmount = String(parsed);
+          if (parsed) next.packAmount = String(parsed);
         }
         return next;
       }),
@@ -123,7 +128,7 @@ export function VariantsEditor({
           <div className={showWeight ? `${styles.variantHead} ${styles.variantWide}` : styles.variantHead}>
             <span>Pack size</span>
             <span>Price (₹)</span>
-            <span>{isShared ? `One pack holds (${names.small})` : "Packs in stock"}</span>
+            <span>{isShared ? "One pack holds" : "Packs in stock"}</span>
             {showWeight && <span>Weight (g)</span>}
             <span />
           </div>
@@ -132,59 +137,77 @@ export function VariantsEditor({
               key={row.id ?? `new-${index}`}
               className={showWeight ? `${styles.variantRow} ${styles.variantWide}` : styles.variantRow}
             >
-              <input
-                className={ui.input}
-                value={row.label}
-                onChange={(event) => update(index, "label", event.target.value)}
-                placeholder="250 g"
-                aria-label="Pack size"
-                maxLength={40}
-              />
-              <input
-                className={ui.input}
-                value={row.price}
-                onChange={(event) => update(index, "price", event.target.value)}
-                type="number"
-                min="1"
-                step="0.01"
-                aria-label={`Price for ${row.label || "this pack"}`}
-              />
+              <label className={styles.variantField}>
+                <span className={styles.variantCaption}>Pack size</span>
+                <input
+                  className={ui.input}
+                  value={row.label}
+                  onChange={(event) => update(index, "label", event.target.value)}
+                  placeholder="250 g"
+                  aria-label="Pack size"
+                  maxLength={40}
+                />
+              </label>
+              <label className={styles.variantField}>
+                <span className={styles.variantCaption}>Price (₹)</span>
+                <input
+                  className={ui.input}
+                  value={row.price}
+                  onChange={(event) => update(index, "price", event.target.value)}
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  aria-label={`Price for ${row.label || "this pack"}`}
+                />
+              </label>
               {isShared ? (
-                <div>
-                  <input
-                    className={ui.input}
-                    value={row.packAmount}
-                    onChange={(event) => update(index, "packAmount", event.target.value)}
-                    type="number"
-                    min="1"
-                    step="1"
-                    aria-label={`${names.noun} of ${row.label || "this pack"} in ${names.small}`}
-                  />
+                <div className={styles.variantField}>
+                  <span className={styles.variantCaption}>One pack holds</span>
+                  {parsePackAmount(row.label, unit) ? (
+                    <span className={styles.packFromLabel}>{formatStockAmount(Number(row.packAmount), unit)}</span>
+                  ) : (
+                    <input
+                      className={ui.input}
+                      value={row.packAmount}
+                      onChange={(event) => update(index, "packAmount", event.target.value)}
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder={names.small}
+                      aria-label={`${names.noun} of ${row.label || "this pack"} in ${names.small}`}
+                    />
+                  )}
                   <span className={ui.hint}>
-                    {Number(row.packAmount) > 0 ? `${packsFromStock(totalBase, Number(row.packAmount))} available` : " "}
+                    {Number(row.packAmount) > 0 ? packsLeft(packsFromStock(totalBase, Number(row.packAmount))) : " "}
                   </span>
                 </div>
               ) : (
-                <input
-                  className={ui.input}
-                  value={row.stock}
-                  onChange={(event) => update(index, "stock", event.target.value)}
-                  type="number"
-                  min="0"
-                  step="1"
-                  aria-label={`Stock for ${row.label || "this pack"}`}
-                />
+                <label className={styles.variantField}>
+                  <span className={styles.variantCaption}>Packs in stock</span>
+                  <input
+                    className={ui.input}
+                    value={row.stock}
+                    onChange={(event) => update(index, "stock", event.target.value)}
+                    type="number"
+                    min="0"
+                    step="1"
+                    aria-label={`Stock for ${row.label || "this pack"}`}
+                  />
+                </label>
               )}
               {showWeight && (
-                <input
-                  className={ui.input}
-                  value={row.weight}
-                  onChange={(event) => update(index, "weight", event.target.value)}
-                  type="number"
-                  min="1"
-                  step="1"
-                  aria-label={`Weight of ${row.label || "this pack"} in grams`}
-                />
+                <label className={styles.variantField}>
+                  <span className={styles.variantCaption}>Weight (g)</span>
+                  <input
+                    className={ui.input}
+                    value={row.weight}
+                    onChange={(event) => update(index, "weight", event.target.value)}
+                    type="number"
+                    min="1"
+                    step="1"
+                    aria-label={`Weight of ${row.label || "this pack"} in grams`}
+                  />
+                </label>
               )}
               <button
                 type="button"
